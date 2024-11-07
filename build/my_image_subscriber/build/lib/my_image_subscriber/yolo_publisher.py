@@ -10,16 +10,20 @@ import time
 import os
 import math
 from shapely.geometry import Polygon
-from std_msgs.msg import String  # 스트링
-import argparse  # argparse 모듈 추가
+from std_msgs.msg import String # 스트링
+
 
 class YoloPublisher(Node):
-    def __init__(self, model_path):
+    def __init__(self):
         super().__init__('yolo_publisher')
         self.publisher_ = self.create_publisher(Image, 'processed_image', 10)
         self.alarm_publisher = self.create_publisher(String, 'alarm', 10)  # 알람 퍼블리시
         self.bridge = CvBridge()
-        self.model = YOLO(model_path)  # 전달받은 모델 경로 사용
+        
+        self.declare_parameter('model_path', '/home/rokey/1_ws/src/best.pt')
+        model_path = self.get_parameter('model_path').get_parameter_value().string_value
+        self.model = YOLO(model_path)
+       
         self.coordinates = []
         self.output_dir = './output'
         os.makedirs(self.output_dir, exist_ok=True)
@@ -109,18 +113,7 @@ class YoloPublisher(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    
-    # argparse를 사용하여 명령줄 인자 파싱
-    parser = argparse.ArgumentParser(description='YoloPublisher Node')
-    parser.add_argument('--user', type=str, default='rokey', help='User name for model path')
-    args, unknown = parser.parse_known_args()
-    
-    # 모델 경로 생성
-    model_path = f'/home/{args.user}/1_ws/src/best.pt'
-    
-    # YoloPublisher 노드 생성 시 모델 경로 전달
-    node = YoloPublisher(model_path)
-    
+    node = YoloPublisher()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
