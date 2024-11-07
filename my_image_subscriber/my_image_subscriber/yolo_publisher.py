@@ -19,7 +19,7 @@ class YoloPublisher(Node):
         self.publisher_ = self.create_publisher(Image, 'processed_image', 10)
         self.alarm_publisher = self.create_publisher(String, 'alarm', 10)  # New publisher
         self.bridge = CvBridge()
-        self.model = YOLO('/home/theo/1_ws/src/best.pt') # 수정 필요
+        self.model = YOLO('/home/rokey/1_ws/src/best.pt') # 수정 필요
         self.coordinates = []
         self.output_dir = './output'
         os.makedirs(self.output_dir, exist_ok=True)
