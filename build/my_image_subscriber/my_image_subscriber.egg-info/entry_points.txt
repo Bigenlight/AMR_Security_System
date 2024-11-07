@@ -1,3 +1,4 @@
 [console_scripts]
 image_subscriber = my_image_subscriber.image_subscriber:main
 yolo_publisher = my_image_subscriber.yolo_publisher:main
+

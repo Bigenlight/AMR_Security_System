@@ -10,6 +10,9 @@ setup.py
 my_image_subscriber/__init__.py
 my_image_subscriber/image_subscriber.py
 my_image_subscriber/yolo_publisher.py
+my_image_subscriber/templates/index.html
+my_image_subscriber/templates/login_center.html
+my_image_subscriber/templates/welcome_center_two_cam.html
 test/test_copyright.py
 test/test_flake8.py
 test/test_pep257.py
