@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
+from std_msgs.msg import String  # 스트링
 from cv_bridge import CvBridge
 from ultralytics import YOLO
 import cv2
@@ -10,16 +11,23 @@ import time
 import os
 import math
 from shapely.geometry import Polygon
-from std_msgs.msg import String  # 스트링
 import argparse  # argparse 모듈 추가
+import json  # Import json for serialization
 
 class YoloPublisher(Node):
     def __init__(self, model_path):
         super().__init__('yolo_publisher')
+        
+        # Publishers
         self.publisher_ = self.create_publisher(Image, 'processed_image', 10)
         self.alarm_publisher = self.create_publisher(String, 'alarm', 10)  # 알람 퍼블리시
+        self.detection_publisher = self.create_publisher(String, 'detection_info', 10)  # New publisher
+        
+        # Bridge and Model
         self.bridge = CvBridge()
         self.model = YOLO(model_path)  # 전달받은 모델 경로 사용
+        
+        # Initialization
         self.coordinates = []
         self.output_dir = './output'
         os.makedirs(self.output_dir, exist_ok=True)
@@ -53,13 +61,13 @@ class YoloPublisher(Node):
 
     def process_frames(self):
         """Process frames for object detection in a separate thread."""
-
         while True:
             if self.current_frame is not None and self.frame_count % 2 == 0:
                 with self.lock:
                     frame_to_process = self.current_frame.copy()
                     
                 car_detected = False  # Flag to check if a car is detected
+                detection_info_list = []  # List to store detection info
 
                 # Run YOLO object detection on every other frame
                 results = self.model(frame_to_process, stream=True)
@@ -72,16 +80,31 @@ class YoloPublisher(Node):
                         cv2.putText(frame_to_process, f"{self.classNames[cls]}: {confidence}", (x1, y1),
                                     cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
                         
-                        # Check if the detected class is 'car' (class 0)
+                        # Append detection info to the list if the class is 'car' (class 0)
                         if cls == 0:
-                            car_detected = True
+                            detection_info = {
+                                'box_coordinates': [x1, y1, x2, y2],
+                                'class_number': cls,
+                                'confidence': confidence
+                            }
+                            detection_info_list.append(detection_info)
+                            car_detected = True  # Set flag since a car is detected
 
-                # Publish the alarm message based on detection state change
+                # Publish the alarm message and detection info when a car is detected for the first time
                 if car_detected and not self.car_previously_detected:
+                    # Publish alarm message
                     alarm_msg = String()
                     alarm_msg.data = 'car detected'
                     self.alarm_publisher.publish(alarm_msg)
+
+                    # Publish the detection info
+                    if detection_info_list:
+                        detection_info_msg = String()
+                        detection_info_msg.data = json.dumps(detection_info_list)
+                        self.detection_publisher.publish(detection_info_msg)
+
                 elif not car_detected and self.car_previously_detected:
+                    # Publish alarm message when car is no longer detected
                     alarm_msg = String()
                     alarm_msg.data = 'car no longer detected'
                     self.alarm_publisher.publish(alarm_msg)
