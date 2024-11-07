@@ -1,0 +1,3 @@
+[console_scripts]
+video_capture_node = my_video_package.video_capture_node:main
+
