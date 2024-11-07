@@ -13,6 +13,7 @@ import math
 from shapely.geometry import Polygon
 import argparse  # argparse 모듈 추가
 import json  # Import json for serialization
+from datetime import datetime  # Import datetime for timestamp formatting
 
 class YoloPublisher(Node):
     def __init__(self, model_path):
@@ -82,7 +83,13 @@ class YoloPublisher(Node):
                         
                         # Append detection info to the list if the class is 'car' (class 0)
                         if cls == 0:
+                            # Get the current time for each detection
+                            current_time_ros = self.get_clock().now()
+                            current_time_nanosec = current_time_ros.nanoseconds
+                            current_time = datetime.fromtimestamp(current_time_nanosec / 1e9).isoformat()
+
                             detection_info = {
+                                'time': current_time,
                                 'box_coordinates': [x1, y1, x2, y2],
                                 'class_number': cls,
                                 'confidence': confidence
