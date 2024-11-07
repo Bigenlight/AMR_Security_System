@@ -101,7 +101,7 @@ def generate_ros_frames(image_subscriber_node):
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
         else:
             # 프레임이 없을 경우 짧은 대기
-            time.sleep(0.1)
+            time.sleep(0.01)  # 너무 짧게 설정하여 빠르게 다음 프레임을 처리
 
 # Flask 비디오 피드2: camera_id=2 직접 접근
 def generate_camera_frames(camera_id):
@@ -204,14 +204,6 @@ def logout():
 def run_flask_app():
     app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
 
-# 카메라 캡처 스레드 함수
-def camera_capture_thread(camera_id):
-    if camera_id == 2:
-        # 오버레이가 필요한 경우
-        generate_frames_with_overlay(camera_id)
-    else:
-        generate_camera_frames(camera_id)
-
 # 메인 함수
 def main(args=None):
     rclpy.init(args=args)
@@ -222,11 +214,6 @@ def main(args=None):
     flask_thread = threading.Thread(target=run_flask_app)
     flask_thread.daemon = True
     flask_thread.start()
-
-    # camera_id=2 캡처를 별도의 스레드에서 실행
-    camera_thread = threading.Thread(target=generate_camera_frames, args=(2,))
-    camera_thread.daemon = True
-    camera_thread.start()
 
     try:
         rclpy.spin(node)
