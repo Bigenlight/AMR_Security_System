@@ -7,7 +7,7 @@ class SimpleSubscriber(Node):
         super().__init__('subscriber')
         self.subscription = self.create_subscription(
             String,
-            'topic',
+            'alarm',
             self.listener_callback,
             10)
 
