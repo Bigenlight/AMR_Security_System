@@ -1,10 +1,11 @@
 import rclpy
 from rclpy.node import Node
+from sensor_msgs.msg import Image
 import os
 import cv2
-import time
 import sqlite3
 from datetime import datetime
+from cv_bridge import CvBridge
 
 VIDEO_SAVE_FOLDER = "captured_videos"
 os.makedirs(VIDEO_SAVE_FOLDER, exist_ok=True)
@@ -51,47 +52,57 @@ class VideoCaptureNode(Node):
     def __init__(self):
         super().__init__('video_capture_node')
         create_tables()
-        self.cap = cv2.VideoCapture(0)
-        if not self.cap.isOpened():
-            self.get_logger().error("카메라를 열 수 없습니다.")
-            return
 
-        # 비디오 저장을 위한 설정
+        # CvBridge 초기화
+        self.bridge = CvBridge()
+        self.video_writer = None
+        self.filename = None
+
+        # 'processed_image' 토픽 구독
+        self.subscription = self.create_subscription(
+            Image,
+            'processed_image',
+            self.image_callback,
+            10
+        )
+        self.subscription  # prevent unused variable warning
+
+        self.get_logger().info("VideoCaptureNode가 시작되었으며 'processed_image' 토픽을 구독합니다.")
+
+    def image_callback(self, msg):
+        # ROS 이미지 메시지를 OpenCV 이미지로 변환
+        cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+
+        # VideoWriter 초기화
+        if self.video_writer is None:
+            self.initialize_video_writer(cv_image)
+
+        # 프레임을 비디오 파일에 작성
+        self.video_writer.write(cv_image)
+
+    def initialize_video_writer(self, frame):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.filename = f"{VIDEO_SAVE_FOLDER}/video_{timestamp}.mp4"
+
+        # 프레임 크기 얻기
+        frame_height, frame_width = frame.shape[:2]
+
+        # 코덱 정의 및 VideoWriter 객체 생성
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        frame_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        frame_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.out = cv2.VideoWriter(self.filename, fourcc, 20.0, (frame_width, frame_height))
-
+        self.video_writer = cv2.VideoWriter(self.filename, fourcc, 20.0, (frame_width, frame_height))
         self.get_logger().info(f"녹화 시작: {self.filename}")
-
-        # 비디오 녹화를 위한 타이머 설정 (빠른 주기로 프레임 캡처)
-        self.timer = self.create_timer(0.05, self.record_video)  # 20 FPS
-
-    def record_video(self):
-        ret, frame = self.cap.read()
-        if ret:
-            self.out.write(frame)
-        else:
-            self.get_logger().error("프레임을 읽을 수 없습니다.")
 
     def destroy_node(self):
         self.get_logger().info("녹화를 종료하고 비디오를 저장합니다.")
-        if self.cap.isOpened():
-            self.cap.release()
-        self.out.release()
-        save_video_to_db(self.filename)
-        self.get_logger().info(f"비디오 저장 완료: {self.filename}")
+        if self.video_writer is not None:
+            self.video_writer.release()
+            save_video_to_db(self.filename)
+            self.get_logger().info(f"비디오 저장 완료: {self.filename}")
         super().destroy_node()
 
 def main(args=None):
     rclpy.init(args=args)
     video_capture_node = VideoCaptureNode()
-
-    if not video_capture_node.cap.isOpened():
-        rclpy.shutdown()
-        return
 
     try:
         rclpy.spin(video_capture_node)
