@@ -35,8 +35,20 @@ class YoloPublisher(Node):
         
         # Video capture setup
         self.cap = cv2.VideoCapture(0)  # Adjust this to your camera source
-        self.cap.set(3, 640)
-        self.cap.set(4, 480)
+        self.cap.set(3, 640)  # Width
+        self.cap.set(4, 480)  # Height
+        
+        # Get image dimensions
+        self.image_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.image_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        
+        # Define the rectangle in the top-right corner (1.3 times the original height)
+        # Original: 50% to 100% width, 0% to 50% height
+        # New: 50% to 100% width, 0% to 65% height (1.3 * 50% = 65%)
+        self.rect_x1 = int(self.image_width * 0.5)  # Starting at 50% of the width
+        self.rect_y1 = 0  # Top of the image
+        self.rect_x2 = self.image_width  # Right edge of the image
+        self.rect_y2 = int(self.image_height * 0.65)  # 65% of the height
         
         # Control flags
         self.frame_count = 0  # Used to process every other frame
@@ -70,6 +82,20 @@ class YoloPublisher(Node):
                 car_detected = False  # Flag to check if a car is detected
                 detection_info_list = []  # List to store detection info
 
+                # Draw the red rectangle in the top-right corner
+                cv2.rectangle(frame_to_process, 
+                              (self.rect_x1, self.rect_y1), 
+                              (self.rect_x2, self.rect_y2), 
+                              (0, 0, 255), 4)  # Red rectangle with thickness 2
+
+                # Define the rectangle polygon
+                rect_polygon = Polygon([
+                    (self.rect_x1, self.rect_y1),
+                    (self.rect_x2, self.rect_y1),
+                    (self.rect_x2, self.rect_y2),
+                    (self.rect_x1, self.rect_y2)
+                ])
+
                 # Run YOLO object detection on every other frame
                 results = self.model(frame_to_process, stream=True)
                 for r in results:
@@ -77,27 +103,37 @@ class YoloPublisher(Node):
                         x1, y1, x2, y2 = map(int, box.xyxy[0])
                         confidence = math.ceil(box.conf[0] * 100) / 100
                         cls = int(box.cls[0])
-                        cv2.rectangle(frame_to_process, (x1, y1), (x2, y2), (0, 0, 255), 2)
-                        cv2.putText(frame_to_process, f"{self.classNames[cls]}: {confidence}", (x1, y1),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                        ## 감시 박스
+                        cv2.rectangle(frame_to_process, (x1, y1), (x2, y2), (0, 0, 255), 2)  # Red bounding box
+                        cv2.putText(frame_to_process, f"{self.classNames[cls]}: {confidence}", (x1, y1 - 10),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)  # Blue text above the box
                         
-                        # Append detection info to the list if the class is 'car' (class 0)
+                        # Check if the detected class is 'car' (class 0)
                         if cls == 0:
-                            # Get the current time for each detection
-                            current_time_ros = self.get_clock().now()
-                            current_time_nanosec = current_time_ros.nanoseconds
-                            current_time = datetime.fromtimestamp(current_time_nanosec / 1e9).isoformat()
+                            # Create a polygon for the detection box
+                            box_polygon = Polygon([
+                                (x1, y1),
+                                (x2, y1),
+                                (x2, y2),
+                                (x1, y2)
+                            ])
+                            # Check if the detection box intersects with the rectangle
+                            if box_polygon.intersects(rect_polygon):
+                                # Get the current time for each detection
+                                current_time_ros = self.get_clock().now()
+                                current_time_nanosec = current_time_ros.nanoseconds
+                                current_time = datetime.fromtimestamp(current_time_nanosec / 1e9).isoformat()
 
-                            detection_info = {
-                                'time': current_time,
-                                'box_coordinates': [x1, y1, x2, y2],
-                                'class_number': cls,
-                                'confidence': confidence
-                            }
-                            detection_info_list.append(detection_info)
-                            car_detected = True  # Set flag since a car is detected
+                                detection_info = {
+                                    'time': current_time,
+                                    'box_coordinates': [x1, y1, x2, y2],
+                                    'class_number': cls,
+                                    'confidence': confidence
+                                }
+                                detection_info_list.append(detection_info)
+                                car_detected = True  # Set flag since a car is detected within the rectangle
 
-                # Publish the alarm message and detection info when a car is detected for the first time
+                # Publish the alarm message and detection info when a car is detected within the rectangle for the first time
                 if car_detected and not self.car_previously_detected:
                     # Publish alarm message
                     alarm_msg = String()
