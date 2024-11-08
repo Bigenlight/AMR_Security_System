@@ -10,15 +10,15 @@ setup(
     packages=[package_name],
     data_files=[
         ('share/' + package_name, ['package.xml']),
-        # 필요 시 다른 데이터 파일 추가
+        # 런치 파일 포함
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='your_name',
-    maintainer_email='your_email@example.com',
+    maintainer='your_name',  # 실제 유지보수자 이름으로 변경
+    maintainer_email='your_email@example.com',  # 실제 이메일로 변경
     description='Publishers for /initialpose and /goal_pose',
     license='Apache License 2.0',
-    # tests_require=['pytest'],  # 이 라인을 제거합니다.
     entry_points={
         'console_scripts': [
             'publish_initial_and_goal = turtlebot3_custom_publishers.publish_initial_and_goal:main',

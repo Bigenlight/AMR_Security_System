@@ -68,7 +68,7 @@ class InitialAndGoalPublisher(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = InitialAndGoalPublisher()
-    rclpy.spin(node)  # 노드를 계속 실행 상태로 유지하여 콜백 처리
+    rclpy.spin(node)  # 콜백 처리를 위해 노드 실행
     # 노드가 종료되면 여기로 이동
     node.destroy_node()
     rclpy.shutdown()
