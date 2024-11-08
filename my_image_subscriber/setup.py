@@ -20,7 +20,8 @@ setup(
     entry_points={
         'console_scripts': [
             'image_subscriber = my_image_subscriber.image_subscriber:main',
-            'yolo_publisher = my_image_subscriber.yolo_publisher:main',        
+            'yolo_publisher = my_image_subscriber.yolo_publisher:main',
+            'trecking_mode = my_image_subscriber.trecking_mode:main',        
         ],
     },
 )
