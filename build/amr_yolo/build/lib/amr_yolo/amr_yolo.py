@@ -12,7 +12,7 @@ class AmrYoloNode(Node):
         super().__init__('amr_yolo')
         
         # Publisher
-        self.detection_publisher = self.create_publisher(String, 'detection_info_amr', 10)
+        self.detection_publisher = self.create_publisher(String, 'detection_info_arm', 10)
         
         # YOLO Model
         self.model = YOLO(model_path)
