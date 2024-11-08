@@ -1,3 +1,0 @@
-[console_scripts]
-amr_yolo = amr_yolo.amr_yolo:main
-
