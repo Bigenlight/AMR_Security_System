@@ -134,7 +134,7 @@ class DetectionTracker(Node):
         """
         timer_period = 0.1  # 10Hz
         self.timer = self.create_timer(timer_period, self.timer_callback)
-
+        self.get_logger().debug("Target found. Calling track_target()")
     def timer_callback(self):
         """
         타이머 콜백 함수.
@@ -143,6 +143,7 @@ class DetectionTracker(Node):
         if self.target_found:
             self.track_target()
         else:
+            self.get_logger().debug("No target found. Skipping track_target.")
             # 네비게이션 모드에서는 별도의 동작을 하지 않음
             pass
 
