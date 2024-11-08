@@ -1,5 +1,0 @@
-  File "/home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages/my_image_subscriber/image_subscriber.py", line 178
-    yield (b'--frame\r\n'
-          ^
-SyntaxError: '(' was never closed
-
