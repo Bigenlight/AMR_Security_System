@@ -55,7 +55,7 @@ class YoloPublisher(Node):
         self.lock = threading.Lock()
         self.current_frame = None
         self.processed_frame = None
-        self.classNames = ['car']
+        self.classNames = ['car' , 'dummy']
         self.car_previously_detected = False  # Tracks previous detection state
 
         # Start threads
