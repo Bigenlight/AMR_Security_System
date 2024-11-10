@@ -18,7 +18,7 @@ class YOLOTrackingPublisher(Node):
 
         # Screen center x-coordinate
         self.screen_center_x = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) / 2)
-        self.alignment_tolerance = 20  # Pixel tolerance for alignment
+        self.alignment_tolerance = 30  # Pixel tolerance for alignment
 
     def timer_callback(self):
         ret, frame = self.cap.read()
@@ -60,8 +60,8 @@ class YOLOTrackingPublisher(Node):
 
             # Proportional control for angular speed
             angular_speed_gain = 0.005  # Adjust this gain as needed
-            max_angular_speed = 0.2     # Max angular speed
-            max_linear_speed = 0.05     # Max linear speed (adjusted for your robot)
+            max_angular_speed = 0.5     # Max angular speed
+            max_linear_speed = 0.11     # Max linear speed (adjusted for your robot)
 
             if abs(alignment_error) > self.alignment_tolerance:
                 # Rotate to align with the object
