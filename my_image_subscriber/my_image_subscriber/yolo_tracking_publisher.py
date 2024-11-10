@@ -9,6 +9,7 @@ from ultralytics import YOLO
 import cv2
 from nav2_msgs.action import FollowWaypoints  # FollowWaypoints 액션 임포트
 from rclpy.action import ActionClient
+from action_msgs.srv import CancelGoal
 
 class YOLOTrackingPublisher(Node):
     def __init__(self):
@@ -97,30 +98,32 @@ class YOLOTrackingPublisher(Node):
 
     def cancel_navigation(self):
         """
-        FollowWaypoints 액션 목표를 취소합니다.
+        Cancel all FollowWaypoints action goals.
         """
-        self.get_logger().info('네비게이션 취소 요청을 보냅니다...')
-        # 액션 서버에 연결되었는지 확인
+        self.get_logger().info('Sending navigation cancel request...')
+        # Ensure the action server is connected
         if not self.follow_waypoints_client.wait_for_server(timeout_sec=5.0):
-            self.get_logger().error('FollowWaypoints 액션 서버에 연결할 수 없습니다!')
+            self.get_logger().error('Unable to connect to FollowWaypoints action server!')
             return
 
-        # 현재 활성화된 모든 목표를 취소
-        cancel_future = self.follow_waypoints_client.cancel_all_goals_async()
+        # Create a CancelGoal request to cancel all goals
+        cancel_request = CancelGoal.Request()
+        # Leave goal_info empty to cancel all goals
+        cancel_future = self.follow_waypoints_client.cancel_goals_async(cancel_request)
         cancel_future.add_done_callback(self.cancel_navigation_callback)
 
     def cancel_navigation_callback(self, future):
         """
-        네비게이션 취소 요청 후의 콜백 함수.
+        Callback after sending navigation cancel request.
         """
         try:
             cancel_response = future.result()
             if len(cancel_response.goals_canceling) > 0:
-                self.get_logger().info('네비게이션 목표가 성공적으로 취소되었습니다.')
+                self.get_logger().info('Navigation goals have been successfully cancelled.')
             else:
-                self.get_logger().warn('취소할 네비게이션 목표가 없습니다.')
+                self.get_logger().warn('There are no navigation goals to cancel.')
         except Exception as e:
-            self.get_logger().error(f'네비게이션 취소 중 오류 발생: {e}')
+            self.get_logger().error(f'Error occurred while cancelling navigation: {e}')
 
     def destroy_node(self):
         super().destroy_node()
