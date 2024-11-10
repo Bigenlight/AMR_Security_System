@@ -25,7 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             # 노드 실행을 위한 entry point 추가
-            'publish_initial_and_goal = turtlebot3_custom_publishers.publish_initial_and_goal:main'
+            'publish_initial_and_goal = turtlebot3_custom_publishers.publish_initial_and_goal:main',
         ],
     },
 )
