@@ -4,16 +4,15 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from visualization_msgs.msg import Marker, MarkerArray
-from rclpy.qos import QoSProfile, QoSDurabilityPolicy
+from rclpy.qos import QoSProfile
 import copy
 
 class InitialAndWaypointsPublisher(Node):
     def __init__(self):
         super().__init__('initial_and_waypoints_publisher')
 
-        # QoS 설정: TRANSIENT_LOCAL로 설정하여 새로운 구독자에게 마지막 메시지를 전달
+        # QoS 설정: default QoS (volatile)
         qos_profile = QoSProfile(depth=10)
-        qos_profile.durability = QoSDurabilityPolicy.TRANSIENT_LOCAL
 
         # 퍼블리셔 생성
         self.initialpose_publisher = self.create_publisher(PoseWithCovarianceStamped, '/initialpose', qos_profile)
@@ -47,7 +46,7 @@ class InitialAndWaypointsPublisher(Node):
         marker1.header.frame_id = 'map'
         marker1.ns = 'waypoints'
         marker1.id = 1
-        marker1.type = Marker.TEXT_VIEW_FACING  # type: 9 corresponds to TEXT_VIEW_FACING
+        marker1.type = Marker.TEXT_VIEW_FACING
         marker1.action = Marker.ADD
         marker1.pose.position.x = 0.29292383790016174
         marker1.pose.position.y = -0.22626881301403046
@@ -60,7 +59,7 @@ class InitialAndWaypointsPublisher(Node):
         marker1.scale.y = 0.07
         marker1.scale.z = 0.07
         marker1.color.r = 0.0
-        marker1.color.g = 1.0  # ROS에서는 색상 값이 0.0~1.0 범위입니다.
+        marker1.color.g = 1.0  # 초록색
         marker1.color.b = 0.0
         marker1.color.a = 1.0
         marker1.lifetime.sec = 0
@@ -74,7 +73,7 @@ class InitialAndWaypointsPublisher(Node):
         marker2.header.frame_id = 'map'
         marker2.ns = 'waypoints'
         marker2.id = 2
-        marker2.type = Marker.ARROW  # type: 0 corresponds to ARROW
+        marker2.type = Marker.ARROW
         marker2.action = Marker.ADD
         marker2.pose.position.x = -0.4314682185649872
         marker2.pose.position.y = -0.6317271590232849
@@ -87,7 +86,7 @@ class InitialAndWaypointsPublisher(Node):
         marker2.scale.y = 0.05
         marker2.scale.z = 0.02
         marker2.color.r = 0.0
-        marker2.color.g = 1.0  # ROS에서는 색상 값이 0.0~1.0 범위입니다.
+        marker2.color.g = 1.0  # 초록색
         marker2.color.b = 0.0
         marker2.color.a = 1.0
         marker2.lifetime.sec = 0
@@ -100,7 +99,7 @@ class InitialAndWaypointsPublisher(Node):
         marker3.header.frame_id = 'map'
         marker3.ns = 'waypoints'
         marker3.id = 3
-        marker3.type = Marker.CUBE  # type: 2 corresponds to CUBE
+        marker3.type = Marker.CUBE
         marker3.action = Marker.ADD
         marker3.pose.position.x = -1.0217899084091187
         marker3.pose.position.y = -0.1412075310945511
@@ -113,7 +112,7 @@ class InitialAndWaypointsPublisher(Node):
         marker3.scale.y = 0.07
         marker3.scale.z = 0.07
         marker3.color.r = 0.0
-        marker3.color.g = 1.0  # ROS에서는 색상 값이 0.0~1.0 범위입니다.
+        marker3.color.g = 1.0  # 초록색
         marker3.color.b = 0.0
         marker3.color.a = 1.0
         marker3.lifetime.sec = 0
@@ -127,7 +126,7 @@ class InitialAndWaypointsPublisher(Node):
         marker4.header.frame_id = 'map'
         marker4.ns = 'waypoints'
         marker4.id = 4
-        marker4.type = Marker.TEXT_VIEW_FACING  # type: 9 corresponds to TEXT_VIEW_FACING
+        marker4.type = Marker.TEXT_VIEW_FACING
         marker4.action = Marker.ADD
         marker4.pose.position.x = -1.4410333633422852
         marker4.pose.position.y = -0.6268379092216492
@@ -140,7 +139,7 @@ class InitialAndWaypointsPublisher(Node):
         marker4.scale.y = 0.07
         marker4.scale.z = 0.07
         marker4.color.r = 0.0
-        marker4.color.g = 1.0  # ROS에서는 색상 값이 0.0~1.0 범위입니다.
+        marker4.color.g = 1.0  # 초록색
         marker4.color.b = 0.0
         marker4.color.a = 1.0
         marker4.lifetime.sec = 0
@@ -198,7 +197,7 @@ class InitialAndWaypointsPublisher(Node):
                 self.waypoints_publisher.publish(marker_array)
                 self.get_logger().info(f'Published waypoints array [{self.publish_count + 1}/{self.max_publishes}]')
 
-                self.publish_count +=1
+                self.publish_count += 1
             else:
                 # 10번 발행 완료, 노드 종료
                 self.get_logger().info('Finished publishing waypoints 10 times. Shutting down node.')
