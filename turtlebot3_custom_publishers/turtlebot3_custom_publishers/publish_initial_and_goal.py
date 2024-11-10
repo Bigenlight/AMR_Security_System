@@ -110,13 +110,13 @@ class InitialAndWaypointsPublisher(Node):
                 initialpose_msg = PoseWithCovarianceStamped()
                 initialpose_msg.header.frame_id = 'map'
                 initialpose_msg.header.stamp = current_time.to_msg()
-                initialpose_msg.pose.pose.position.x = 0.03124990686774254  # 원래 값 유지
-                initialpose_msg.pose.pose.position.y = -0.009375147521495819  # 원래 값 유지
+                initialpose_msg.pose.pose.position.x = 0.03124990686774254  # 사용자 제공 값
+                initialpose_msg.pose.pose.position.y = -0.009375147521495819  # 사용자 제공 값
                 initialpose_msg.pose.pose.position.z = 0.0
                 initialpose_msg.pose.pose.orientation.x = 0.0
                 initialpose_msg.pose.pose.orientation.y = 0.0
-                initialpose_msg.pose.pose.orientation.z = 0.009502555788036916
-                initialpose_msg.pose.pose.orientation.w = 0.9999548496974727
+                initialpose_msg.pose.pose.orientation.z = 0.009502555788036916  # 사용자 제공 값
+                initialpose_msg.pose.pose.orientation.w = 0.9999548496974727  # 사용자 제공 값
                 initialpose_msg.pose.covariance = [
                     0.25, 0.0, 0.0, 0.0, 0.0, 0.0,
                     0.0, 0.25, 0.0, 0.0, 0.0, 0.0,
@@ -238,7 +238,7 @@ class InitialAndWaypointsPublisher(Node):
         """
         marker = Marker()
         marker.header.frame_id = pose_stamped.header.frame_id
-        marker.header.stamp = pose_stamped.header.stamp
+        marker.header.stamp = self.get_clock().now().to_msg()
         marker.ns = 'waypoints'
         marker.id = marker_id
 
