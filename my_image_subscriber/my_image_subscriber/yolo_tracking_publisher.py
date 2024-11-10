@@ -18,7 +18,7 @@ class YOLOTrackingPublisher(Node):
 
         # Screen center x-coordinate
         self.screen_center_x = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) / 2)
-        self.alignment_tolerance = 30  # Pixel tolerance for alignment
+        self.alignment_tolerance = 50  # Pixel tolerance for alignment
 
     def timer_callback(self):
         ret, frame = self.cap.read()
