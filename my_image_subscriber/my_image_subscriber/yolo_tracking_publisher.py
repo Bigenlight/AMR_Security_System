@@ -17,12 +17,12 @@ class YOLOTrackingPublisher(Node):
         self.cmd_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
         self.bridge = CvBridge()
         self.model = YOLO('/home/rokey3/1_ws/src/best.pt')
-        self.cap = cv2.VideoCapture(1)
+        self.cap = cv2.VideoCapture(0)
         self.timer = self.create_timer(0.1, self.timer_callback)  # 타이머 주기 조절 가능
 
         # 화면 중심 x좌표
         self.screen_center_x = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) / 2)
-        self.alignment_tolerance = 30  # 정렬을 위한 픽셀 허용 오차
+        self.alignment_tolerance = 50  # 정렬을 위한 픽셀 허용 오차
 
         # FollowWaypoints 액션 클라이언트 생성
         self.follow_waypoints_client = ActionClient(self, FollowWaypoints, 'follow_waypoints')
@@ -75,7 +75,7 @@ class YOLOTrackingPublisher(Node):
 
             # 비례 제어를 위한 각속도 이득
             angular_speed_gain = 0.005  # 필요에 따라 조절
-            max_angular_speed = 0.5     # 최대 각속도
+            max_angular_speed = 0.2     # 최대 각속도
             max_linear_speed = 0.11     # 최대 선속도 (로봇에 맞게 조절)
 
             if abs(alignment_error) > self.alignment_tolerance:
