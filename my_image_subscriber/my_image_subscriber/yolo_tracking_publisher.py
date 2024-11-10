@@ -41,18 +41,19 @@ class YOLOTrackingPublisher(Node):
         results = self.model.track(source=frame, show=False, tracker='bytetrack.yaml')
 
         highest_confidence_detection = None
-        highest_confidence = 0.4
+        highest_confidence = 0.6  # Minimum confidence threshold
 
-        # Iterate over results to find the object with the highest confidence
+        # Iterate over results to find the object with the highest confidence and class_id == 0
         for result in results:
             for detection in result.boxes.data:
                 if len(detection) >= 6:
                     x1, y1, x2, y2, confidence, class_id = detection[:6]
-                    if confidence > highest_confidence:
+                    # Check if the detection meets the confidence and class ID criteria
+                    if confidence > highest_confidence and int(class_id) == 0:
                         highest_confidence = confidence
                         highest_confidence_detection = (x1, y1, x2, y2, confidence, class_id)
 
-        # If a detection is found, draw it and control the robot
+        # If a detection is found with confidence > 0.6 and class_id == 0
         if highest_confidence_detection:
             x1, y1, x2, y2, confidence, class_id = highest_confidence_detection
             center_x = int((x1 + x2) / 2)
@@ -61,7 +62,7 @@ class YOLOTrackingPublisher(Node):
             # Draw the bounding box and center point on the frame
             cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
             cv2.circle(frame, (center_x, center_y), 5, (0, 0, 255), -1)
-            label_text = f'Track_ID: N/A, Conf: {confidence:.2f} Class: {int(class_id)}'
+            label_text = f'Conf: {confidence:.2f} Class: {int(class_id)}'
             cv2.putText(frame, label_text, (int(x1), int(y1) - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
@@ -91,6 +92,11 @@ class YOLOTrackingPublisher(Node):
                 twist.linear.x = max_linear_speed  # Move forward
 
             self.cmd_publisher.publish(twist)
+
+        else:
+            # No valid detection; you may choose to stop the robot or keep previous commands
+            # Optionally, reset navigation_cancelled if you want the robot to resume navigation
+            pass
 
         # Convert the frame to a ROS 2 Image message and publish
         msg = self.bridge.cv2_to_imgmsg(frame, encoding='bgr8')
