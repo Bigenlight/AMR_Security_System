@@ -7,9 +7,9 @@ from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge
 from ultralytics import YOLO
 import cv2
-from nav2_msgs.action import FollowWaypoints  # FollowWaypoints 액션 임포트
+from nav2_msgs.action import FollowWaypoints  # Import FollowWaypoints action
 from rclpy.action import ActionClient
-from action_msgs.srv import CancelGoal
+from action_msgs.srv import CancelGoal  # Import CancelGoal service
 
 class YOLOTrackingPublisher(Node):
     def __init__(self):
@@ -19,31 +19,31 @@ class YOLOTrackingPublisher(Node):
         self.bridge = CvBridge()
         self.model = YOLO('/home/rokey3/1_ws/src/best.pt')
         self.cap = cv2.VideoCapture(0)
-        self.timer = self.create_timer(0.1, self.timer_callback)  # 타이머 주기 조절 가능
+        self.timer = self.create_timer(0.1, self.timer_callback)  # Adjust timer frequency as needed
 
-        # 화면 중심 x좌표
+        # Screen center x-coordinate
         self.screen_center_x = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) / 2)
-        self.alignment_tolerance = 50  # 정렬을 위한 픽셀 허용 오차
+        self.alignment_tolerance = 50  # Pixel tolerance for alignment
 
-        # FollowWaypoints 액션 클라이언트 생성
+        # Create FollowWaypoints action client
         self.follow_waypoints_client = ActionClient(self, FollowWaypoints, 'follow_waypoints')
 
-        # 네비게이션 취소 상태 추적 변수
+        # Navigation cancellation status tracking variable
         self.navigation_cancelled = False
 
     def timer_callback(self):
         ret, frame = self.cap.read()
         if not ret:
-            self.get_logger().warn("웹캠에서 프레임을 캡처하지 못했습니다.")
+            self.get_logger().warn("Failed to capture frame from webcam.")
             return
 
-        # 트래킹 실행 및 결과 가져오기
+        # Run tracking and get results
         results = self.model.track(source=frame, show=False, tracker='bytetrack.yaml')
 
         highest_confidence_detection = None
         highest_confidence = 0.0
 
-        # 결과를 순회하며 가장 높은 신뢰도의 객체 찾기
+        # Iterate over results to find the object with the highest confidence
         for result in results:
             for detection in result.boxes.data:
                 if len(detection) >= 6:
@@ -52,47 +52,47 @@ class YOLOTrackingPublisher(Node):
                         highest_confidence = confidence
                         highest_confidence_detection = (x1, y1, x2, y2, confidence, class_id)
 
-        # 감지가 이루어진 경우, 박스를 그리며 로봇 제어
+        # If a detection is found, draw it and control the robot
         if highest_confidence_detection:
             x1, y1, x2, y2, confidence, class_id = highest_confidence_detection
             center_x = int((x1 + x2) / 2)
             center_y = int((y1 + y2) / 2)
 
-            # 프레임에 바운딩 박스와 중심점 그리기
+            # Draw the bounding box and center point on the frame
             cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
             cv2.circle(frame, (center_x, center_y), 5, (0, 0, 255), -1)
             label_text = f'Track_ID: N/A, Conf: {confidence:.2f} Class: {int(class_id)}'
             cv2.putText(frame, label_text, (int(x1), int(y1) - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-            # 네비게이션이 아직 취소되지 않았다면, 취소 요청
+            # If navigation hasn't been cancelled yet, send a cancellation request
             if not self.navigation_cancelled:
                 self.cancel_navigation()
-                self.navigation_cancelled = True  # 한 번만 호출되도록 설정
+                self.navigation_cancelled = True  # Ensure it's called only once
 
-            # 트래킹 모드에서 로봇 제어 명령 발행
+            # Publish movement commands to align the object with the center and move forward
             twist = Twist()
             alignment_error = center_x - self.screen_center_x
 
-            # 비례 제어를 위한 각속도 이득
-            angular_speed_gain = 0.005  # 필요에 따라 조절
-            max_angular_speed = 0.2     # 최대 각속도
-            max_linear_speed = 0.11     # 최대 선속도 (로봇에 맞게 조절)
+            # Proportional control for angular speed
+            angular_speed_gain = 0.005  # Adjust as needed
+            max_angular_speed = 0.2     # Max angular speed
+            max_linear_speed = 0.11     # Max linear speed (adjusted for your robot)
 
             if abs(alignment_error) > self.alignment_tolerance:
-                # 객체와 정렬을 위해 회전
+                # Rotate to align with the object
                 twist.angular.z = -angular_speed_gain * alignment_error
-                # 과도한 회전을 방지하기 위해 각속도 제한
+                # Limit the angular speed to prevent too fast rotation
                 twist.angular.z = max(-max_angular_speed, min(max_angular_speed, twist.angular.z))
-                twist.linear.x = 0.0  # 정렬 중에는 전진하지 않음
+                twist.linear.x = 0.0  # Stop moving forward while aligning
             else:
-                # 정렬이 완료되면 전진
+                # When aligned, move forward
                 twist.angular.z = 0.0
-                twist.linear.x = max_linear_speed  # 전진
+                twist.linear.x = max_linear_speed  # Move forward
 
             self.cmd_publisher.publish(twist)
 
-        # 프레임을 ROS 2 Image 메시지로 변환하여 발행
+        # Convert the frame to a ROS 2 Image message and publish
         msg = self.bridge.cv2_to_imgmsg(frame, encoding='bgr8')
         self.image_publisher.publish(msg)
 
@@ -101,14 +101,18 @@ class YOLOTrackingPublisher(Node):
         Cancel all FollowWaypoints action goals.
         """
         self.get_logger().info('Sending navigation cancel request...')
-        # Ensure the action server is connected
-        if not self.follow_waypoints_client.wait_for_server(timeout_sec=5.0):
-            self.get_logger().error('Unable to connect to FollowWaypoints action server!')
+        # Create a client for the cancel goal service
+        cancel_client = self.create_client(CancelGoal, 'follow_waypoints/_action/cancel_goal')
+        if not cancel_client.wait_for_service(timeout_sec=5.0):
+            self.get_logger().error('Unable to connect to FollowWaypoints cancel goal service!')
             return
 
-        # Send a cancel request to the action server
-        cancel_future = self.follow_waypoints_client._cancel_goal_async()
-        cancel_future.add_done_callback(self.cancel_navigation_callback)
+        # Create a CancelGoal request with empty goal_info to cancel all goals
+        request = CancelGoal.Request()
+        # Leaving goal_info empty cancels all goals
+
+        future = cancel_client.call_async(request)
+        future.add_done_callback(self.cancel_navigation_callback)
 
     def cancel_navigation_callback(self, future):
         """
@@ -123,6 +127,9 @@ class YOLOTrackingPublisher(Node):
         except Exception as e:
             self.get_logger().error(f'Error occurred while cancelling navigation: {e}')
 
+    def destroy_node(self):
+        super().destroy_node()
+        self.cap.release()
 
 def main(args=None):
     rclpy.init(args=args)
@@ -130,7 +137,7 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        node.get_logger().info("노드가 사용자에 의해 중단되었습니다.")
+        node.get_logger().info("Node interrupted by user.")
     finally:
         if rclpy.ok():
             node.destroy_node()
