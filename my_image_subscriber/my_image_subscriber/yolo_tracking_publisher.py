@@ -10,16 +10,27 @@ import cv2
 from nav2_msgs.action import FollowWaypoints  # Import FollowWaypoints action
 from rclpy.action import ActionClient
 from action_msgs.srv import CancelGoal  # Import CancelGoal service
+import threading
+import time
+import math
 
 class YOLOTrackingPublisher(Node):
     def __init__(self):
         super().__init__('yolo_tracking_publisher')
-        self.image_publisher = self.create_publisher(Image, 'tracked_image', 10)
+
+        # Publishers
+        self.processed_image_publisher = self.create_publisher(Image, 'processed_image_amr', 10)
         self.cmd_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
+
+        # Bridge and Model
         self.bridge = CvBridge()
-        self.model = YOLO('/home/rokey3/1_ws/src/best.pt')
-        self.cap = cv2.VideoCapture(0)
-        self.timer = self.create_timer(0.1, self.timer_callback)  # Adjust timer frequency as needed
+        self.model = YOLO('/home/theo/1_ws/src/best.pt')  # Update the model path as needed
+
+        # Video capture setup
+        self.cap = cv2.VideoCapture(0)  # Adjust this to your camera source
+        if not self.cap.isOpened():
+            self.get_logger().error("Failed to open camera.")
+            return
 
         # Screen center x-coordinate
         self.screen_center_x = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH) / 2)
@@ -31,76 +42,120 @@ class YOLOTrackingPublisher(Node):
         # Navigation cancellation status tracking variable
         self.navigation_cancelled = False
 
-    def timer_callback(self):
-        ret, frame = self.cap.read()
-        if not ret:
-            self.get_logger().warn("Failed to capture frame from webcam.")
-            return
+        # Control flags
+        self.frame_count = 0  # Used to process every other frame
+        self.lock = threading.Lock()
+        self.current_frame = None
+        self.processed_frame = None
 
-        # Run tracking and get results
-        results = self.model.track(source=frame, show=False, tracker='bytetrack.yaml')
+        # Class names (assuming class 0: car, class 1: dummy)
+        self.class_names = ['car', 'dummy']
 
-        highest_confidence_detection = None
-        highest_confidence = 0.8  # Minimum confidence threshold
+        # Start threads
+        threading.Thread(target=self.capture_frames, daemon=True).start()
+        threading.Thread(target=self.process_frames, daemon=True).start()
+        self.timer = self.create_timer(0.1, self.publish_image)  # Adjust timer frequency as needed
 
-        # Iterate over results to find the object with the highest confidence and class_id == 0
-        for result in results:
-            for detection in result.boxes.data:
-                if len(detection) >= 6:
-                    x1, y1, x2, y2, confidence, class_id = detection[:6]
-                    # Check if the detection meets the confidence and class ID criteria
-                    if confidence > highest_confidence and int(class_id) == 0:
+    def capture_frames(self):
+        """Continuously capture frames from the camera in a separate thread."""
+        while rclpy.ok():
+            ret, frame = self.cap.read()
+            if ret:
+                with self.lock:
+                    self.current_frame = frame.copy()
+            else:
+                self.get_logger().warn("Failed to capture frame from webcam.")
+            time.sleep(0.01)  # Slight delay to control frame rate
+
+    def process_frames(self):
+        """Process frames for object detection and movement commands in a separate thread."""
+        while rclpy.ok():
+            if self.current_frame is not None and self.frame_count % 2 == 0:
+                with self.lock:
+                    frame_to_process = self.current_frame.copy()
+            else:
+                time.sleep(0.01)
+                self.frame_count += 1
+                continue
+
+            # Run YOLO detection
+            results = self.model(frame_to_process)
+
+            # Variables to hold tracking info
+            highest_confidence_detection = None
+            highest_confidence = 0.8  # Minimum confidence threshold for tracking
+
+            # Iterate over results to draw bounding boxes and find the best class 0 detection
+            for result in results:
+                for box in result.boxes:
+                    x1, y1, x2, y2 = map(int, box.xyxy[0])
+                    confidence = box.conf[0]
+                    class_id = int(box.cls[0])
+
+                    # Draw bounding boxes and labels for all detections
+                    label_text = f'{self.class_names[class_id]}: {confidence:.2f}'
+                    color = (0, 255, 0) if class_id == 0 else (255, 0, 0)  # Green for class 0, blue for others
+                    cv2.rectangle(frame_to_process, (x1, y1), (x2, y2), color, 2)
+                    cv2.putText(frame_to_process, label_text, (x1, y1 - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+                    # Check for class 0 detections for tracking
+                    if confidence > highest_confidence and class_id == 0:
                         highest_confidence = confidence
                         highest_confidence_detection = (x1, y1, x2, y2, confidence, class_id)
 
-        # If a detection is found with confidence > 0.6 and class_id == 0
-        if highest_confidence_detection:
-            x1, y1, x2, y2, confidence, class_id = highest_confidence_detection
-            center_x = int((x1 + x2) / 2)
-            center_y = int((y1 + y2) / 2)
+            # If a class 0 detection is found, proceed with tracking
+            if highest_confidence_detection:
+                x1, y1, x2, y2, confidence, class_id = highest_confidence_detection
+                center_x = int((x1 + x2) / 2)
+                center_y = int((y1 + y2) / 2)
 
-            # Draw the bounding box and center point on the frame
-            cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-            cv2.circle(frame, (center_x, center_y), 5, (0, 0, 255), -1)
-            label_text = f'Conf: {confidence:.2f} Class: {int(class_id)}'
-            cv2.putText(frame, label_text, (int(x1), int(y1) - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                # Draw center point on the frame
+                cv2.circle(frame_to_process, (center_x, center_y), 5, (0, 0, 255), -1)
 
-            # If navigation hasn't been cancelled yet, send a cancellation request
-            if not self.navigation_cancelled:
-                self.cancel_navigation()
-                self.navigation_cancelled = True  # Ensure it's called only once
+                # If navigation hasn't been cancelled yet, send a cancellation request
+                if not self.navigation_cancelled:
+                    self.cancel_navigation()
+                    self.navigation_cancelled = True  # Ensure it's called only once
 
-            # Publish movement commands to align the object with the center and move forward
-            twist = Twist()
-            alignment_error = center_x - self.screen_center_x
+                # Publish movement commands to align the object with the center and move forward
+                twist = Twist()
+                alignment_error = center_x - self.screen_center_x
 
-            # Proportional control for angular speed
-            angular_speed_gain = 0.005  # Adjust as needed
-            max_angular_speed = 0.2     # Max angular speed
-            max_linear_speed = 0.11     # Max linear speed (adjusted for your robot)
+                # Proportional control for angular speed
+                angular_speed_gain = 0.005  # Adjust as needed
+                max_angular_speed = 0.2     # Max angular speed
+                max_linear_speed = 0.11     # Max linear speed (adjusted for your robot)
 
-            if abs(alignment_error) > self.alignment_tolerance:
-                # Rotate to align with the object
-                twist.angular.z = -angular_speed_gain * alignment_error
-                # Limit the angular speed to prevent too fast rotation
-                twist.angular.z = max(-max_angular_speed, min(max_angular_speed, twist.angular.z))
-                twist.linear.x = 0.0  # Stop moving forward while aligning
+                if abs(alignment_error) > self.alignment_tolerance:
+                    # Rotate to align with the object
+                    twist.angular.z = -angular_speed_gain * alignment_error
+                    # Limit the angular speed to prevent too fast rotation
+                    twist.angular.z = max(-max_angular_speed, min(max_angular_speed, twist.angular.z))
+                    twist.linear.x = 0.0  # Stop moving forward while aligning
+                else:
+                    # When aligned, move forward
+                    twist.angular.z = 0.0
+                    twist.linear.x = max_linear_speed  # Move forward
+
+                self.cmd_publisher.publish(twist)
             else:
-                # When aligned, move forward
-                twist.angular.z = 0.0
-                twist.linear.x = max_linear_speed  # Move forward
+                # No valid class 0 detection; you may choose to stop the robot or keep previous commands
+                pass
 
-            self.cmd_publisher.publish(twist)
+            # Update processed frame
+            with self.lock:
+                self.processed_frame = frame_to_process.copy()
 
-        else:
-            # No valid detection; you may choose to stop the robot or keep previous commands
-            # Optionally, reset navigation_cancelled if you want the robot to resume navigation
-            pass
+            self.frame_count += 1
+            time.sleep(0.01)  # Adjust delay if necessary to control processing rate
 
-        # Convert the frame to a ROS 2 Image message and publish
-        msg = self.bridge.cv2_to_imgmsg(frame, encoding='bgr8')
-        self.image_publisher.publish(msg)
+    def publish_image(self):
+        """Publish the latest processed frame."""
+        if self.processed_frame is not None:
+            with self.lock:
+                ros_image = self.bridge.cv2_to_imgmsg(self.processed_frame, encoding="bgr8")
+            self.processed_image_publisher.publish(ros_image)
 
     def cancel_navigation(self):
         """
