@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python30
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
@@ -22,7 +22,8 @@ class DetectionTracker(Node):
         self.declare_parameter('desired_speed', 0.2)       # m/s
         self.declare_parameter('tolerance_rate', 0.05)     # 5%
 
-        self.dconversion = self.get_parameter('dtodconversion').get_parameter_value().double_value
+        #self.dconversion = self.get_parameter('dtodconversion').get_parameter_value().double_value
+        self.dconversion = 50000
         self.image_width = self.get_parameter('image_width').get_parameter_value().integer_value
         self.image_height = self.get_parameter('image_height').get_parameter_value().integer_value
         self.desired_d = self.get_parameter('desired_distance').get_parameter_value().double_value
@@ -74,13 +75,15 @@ class DetectionTracker(Node):
 
     def estimate_distance(self, diagonal_length):
         """
-        바운딩 박스의 대각선을 이용하여 거리를 추정.
-        실제 환경에 맞게 보정 필요.
+        Estimate distance using the diagonal length of the bounding box.
+        Adjustments may be needed to fit the actual environment.
         """
         if diagonal_length == 0:
             return float('inf')
-        estimated_distance = dconversion / diagonal_length
+        estimated_distance = self.dconversion / diagonal_length
         return estimated_distance
+
+
 
     def track_target(self):
         """
