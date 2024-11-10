@@ -33,7 +33,7 @@ class InitialAndWaypointsPublisher(Node):
         # 상태 설정: 'initial' 또는 'waypoints'
         self.current_state = 'initial'
 
-        # 웨이포인트 리스트 정의
+        # 웨이포인트 리스트 정의 (PoseStamped 타입)
         self.waypoints = self.generate_waypoints()
 
         # 각 웨이포인트별 발행 횟수 추적
@@ -46,116 +46,57 @@ class InitialAndWaypointsPublisher(Node):
 
     def generate_waypoints(self):
         """
-        제공된 웨이포인트 데이터를 기반으로 Marker 메시지 리스트를 생성합니다.
+        PoseStamped 타입의 웨이포인트 리스트를 생성합니다.
         """
         waypoints = []
 
         # 웨이포인트 1
-        marker1 = Marker()
-        marker1.header.frame_id = 'map'
-        marker1.ns = 'waypoints'
-        marker1.id = 1
-        marker1.type = Marker.TEXT_VIEW_FACING
-        marker1.action = Marker.ADD
-        marker1.pose.position.x = 0.29292383790016174
-        marker1.pose.position.y = -0.22626881301403046
-        marker1.pose.position.z = 0.2
-        marker1.pose.orientation.x = 0.0
-        marker1.pose.orientation.y = 0.0
-        marker1.pose.orientation.z = -0.7329017748561758
-        marker1.pose.orientation.w = 0.6803344680469067
-        marker1.scale.x = 0.07
-        marker1.scale.y = 0.07
-        marker1.scale.z = 0.07
-        marker1.color.r = 0.0
-        marker1.color.g = 1.0  # 초록색
-        marker1.color.b = 0.0
-        marker1.color.a = 1.0
-        marker1.lifetime.sec = 0
-        marker1.lifetime.nanosec = 0
-        marker1.frame_locked = False
-        marker1.text = 'wp_1'
-        waypoints.append(marker1)
+        pose1 = PoseStamped()
+        pose1.header.frame_id = 'map'
+        pose1.pose.position.x = 0.03124990686774254
+        pose1.pose.position.y = -0.009375147521495819
+        pose1.pose.position.z = 0.0
+        pose1.pose.orientation.x = 0.0
+        pose1.pose.orientation.y = 0.0
+        pose1.pose.orientation.z = 0.009502555788036916
+        pose1.pose.orientation.w = 0.9999548496974727
+        waypoints.append(pose1)
 
         # 웨이포인트 2
-        marker2 = Marker()
-        marker2.header.frame_id = 'map'
-        marker2.ns = 'waypoints'
-        marker2.id = 2
-        marker2.type = Marker.ARROW
-        marker2.action = Marker.ADD
-        marker2.pose.position.x = -0.4314682185649872
-        marker2.pose.position.y = -0.6317271590232849
-        marker2.pose.position.z = 0.0
-        marker2.pose.orientation.x = 0.0
-        marker2.pose.orientation.y = 0.0
-        marker2.pose.orientation.z = 0.9556588551325824
-        marker2.pose.orientation.w = 0.2944760645734756
-        marker2.scale.x = 0.3
-        marker2.scale.y = 0.05
-        marker2.scale.z = 0.02
-        marker2.color.r = 0.0
-        marker2.color.g = 1.0  # 초록색
-        marker2.color.b = 0.0
-        marker2.color.a = 1.0
-        marker2.lifetime.sec = 0
-        marker2.lifetime.nanosec = 0
-        marker2.frame_locked = False
-        waypoints.append(marker2)
+        pose2 = PoseStamped()
+        pose2.header.frame_id = 'map'
+        pose2.pose.position.x = -0.4314682185649872
+        pose2.pose.position.y = -0.6317271590232849
+        pose2.pose.position.z = 0.0
+        pose2.pose.orientation.x = 0.0
+        pose2.pose.orientation.y = 0.0
+        pose2.pose.orientation.z = 0.9556588551325824
+        pose2.pose.orientation.w = 0.2944760645734756
+        waypoints.append(pose2)
 
         # 웨이포인트 3
-        marker3 = Marker()
-        marker3.header.frame_id = 'map'
-        marker3.ns = 'waypoints'
-        marker3.id = 3
-        marker3.type = Marker.CUBE
-        marker3.action = Marker.ADD
-        marker3.pose.position.x = -1.0217899084091187
-        marker3.pose.position.y = -0.1412075310945511
-        marker3.pose.position.z = 0.2
-        marker3.pose.orientation.x = 0.0
-        marker3.pose.orientation.y = 0.0
-        marker3.pose.orientation.z = -0.9966806227907764
-        marker3.pose.orientation.w = 0.08141090930207111
-        marker3.scale.x = 0.07
-        marker3.scale.y = 0.07
-        marker3.scale.z = 0.07
-        marker3.color.r = 0.0
-        marker3.color.g = 1.0  # 초록색
-        marker3.color.b = 0.0
-        marker3.color.a = 1.0
-        marker3.lifetime.sec = 0
-        marker3.lifetime.nanosec = 0
-        marker3.frame_locked = False
-        marker3.text = 'wp_3'
-        waypoints.append(marker3)
+        pose3 = PoseStamped()
+        pose3.header.frame_id = 'map'
+        pose3.pose.position.x = -1.0217899084091187
+        pose3.pose.position.y = -0.1412075310945511
+        pose3.pose.position.z = 0.2
+        pose3.pose.orientation.x = 0.0
+        pose3.pose.orientation.y = 0.0
+        pose3.pose.orientation.z = -0.9966806227907764
+        pose3.pose.orientation.w = 0.08141090930207111
+        waypoints.append(pose3)
 
         # 웨이포인트 4
-        marker4 = Marker()
-        marker4.header.frame_id = 'map'
-        marker4.ns = 'waypoints'
-        marker4.id = 4
-        marker4.type = Marker.TEXT_VIEW_FACING
-        marker4.action = Marker.ADD
-        marker4.pose.position.x = -1.4410333633422852
-        marker4.pose.position.y = -0.6268379092216492
-        marker4.pose.position.z = 0.2
-        marker4.pose.orientation.x = 0.0
-        marker4.pose.orientation.y = 0.0
-        marker4.pose.orientation.z = -0.6834678690015524
-        marker4.pose.orientation.w = 0.7299805970315079
-        marker4.scale.x = 0.07
-        marker4.scale.y = 0.07
-        marker4.scale.z = 0.07
-        marker4.color.r = 0.0
-        marker4.color.g = 1.0  # 초록색
-        marker4.color.b = 0.0
-        marker4.color.a = 1.0
-        marker4.lifetime.sec = 0
-        marker4.lifetime.nanosec = 0
-        marker4.frame_locked = False
-        marker4.text = 'wp_4'
-        waypoints.append(marker4)
+        pose4 = PoseStamped()
+        pose4.header.frame_id = 'map'
+        pose4.pose.position.x = -1.4410333633422852
+        pose4.pose.position.y = -0.6268379092216492
+        pose4.pose.position.z = 0.2
+        pose4.pose.orientation.x = 0.0
+        pose4.pose.orientation.y = 0.0
+        pose4.pose.orientation.z = -0.6834678690015524
+        pose4.pose.orientation.w = 0.7299805970315079
+        waypoints.append(pose4)
 
         return waypoints
 
@@ -197,15 +138,14 @@ class InitialAndWaypointsPublisher(Node):
             if self.current_waypoint_index < len(self.waypoints):
                 waypoint = self.waypoints[self.current_waypoint_index]
 
-                # 웨이포인트 메시지 발행
-                marker_copy = copy.deepcopy(waypoint)
-                marker_copy.header.stamp = current_time.to_msg()
+                # Marker 메시지 생성 및 발행 (시각화를 위해)
+                marker = self.create_marker_from_pose(waypoint, self.current_waypoint_index + 1)
                 marker_array = MarkerArray()
-                marker_array.markers.append(marker_copy)
+                marker_array.markers.append(marker)
                 self.waypoints_publisher.publish(marker_array)
-                self.get_logger().info(f'Published waypoint [ID: {marker_copy.id}]')
+                self.get_logger().info(f'Published waypoint [ID: {marker.id}]')
 
-                # 목표 지점 전송
+                # 목표 지점 전송 (NavigateToPose 액션 클라이언트 사용)
                 self.send_goal(waypoint)
 
                 self.current_waypoint_index += 1
@@ -216,7 +156,44 @@ class InitialAndWaypointsPublisher(Node):
                 self.destroy_node()
                 rclpy.shutdown()
 
+    def create_marker_from_pose(self, pose_stamped: PoseStamped, marker_id: int) -> Marker:
+        """
+        PoseStamped 메시지로부터 Marker 메시지를 생성합니다.
+        """
+        marker = Marker()
+        marker.header.frame_id = pose_stamped.header.frame_id
+        marker.header.stamp = pose_stamped.header.stamp
+        marker.ns = 'waypoints'
+        marker.id = marker_id
+
+        # Marker 유형 설정 (예: TEXT_VIEW_FACING)
+        if marker_id % 3 == 1:
+            marker.type = Marker.TEXT_VIEW_FACING
+            marker.text = f'wp_{marker_id}'
+        elif marker_id % 3 == 2:
+            marker.type = Marker.ARROW
+        else:
+            marker.type = Marker.CUBE
+
+        marker.action = Marker.ADD
+        marker.pose = pose_stamped.pose
+        marker.scale.x = 0.07
+        marker.scale.y = 0.07
+        marker.scale.z = 0.07
+        marker.color.r = 0.0
+        marker.color.g = 1.0  # 초록색
+        marker.color.b = 0.0
+        marker.color.a = 1.0
+        marker.lifetime.sec = 0
+        marker.lifetime.nanosec = 0
+        marker.frame_locked = False
+
+        return marker
+
     def send_goal(self, waypoint: PoseStamped):
+        """
+        NavigateToPose 액션 서버에 목표 지점을 전송합니다.
+        """
         if not self.goal_client.wait_for_server(timeout_sec=5.0):
             self.get_logger().error('NavigateToPose action server not available!')
             return
@@ -229,6 +206,9 @@ class InitialAndWaypointsPublisher(Node):
         send_goal_future.add_done_callback(self.goal_response_callback)
 
     def goal_response_callback(self, future):
+        """
+        목표 지점 수락 여부를 확인하는 콜백 함수.
+        """
         goal_handle = future.result()
         if not goal_handle.accepted:
             self.get_logger().info('Goal rejected.')
@@ -238,6 +218,9 @@ class InitialAndWaypointsPublisher(Node):
         goal_handle.get_result_async().add_done_callback(self.get_result_callback)
 
     def get_result_callback(self, future):
+        """
+        목표 지점 도착 후 결과를 처리하는 콜백 함수.
+        """
         result = future.result().result
         status = future.result().status
 
@@ -249,6 +232,9 @@ class InitialAndWaypointsPublisher(Node):
             self.get_logger().info('Goal succeeded!')
 
     def feedback_callback(self, feedback_msg):
+        """
+        목표 지점 도착 중 피드백을 처리하는 콜백 함수.
+        """
         feedback = feedback_msg.feedback
         self.get_logger().info(f'Received feedback: {feedback.current_pose.pose.position.x}, {feedback.current_pose.pose.position.y}')
 
