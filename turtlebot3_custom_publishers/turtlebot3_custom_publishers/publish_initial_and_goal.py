@@ -12,7 +12,9 @@ class InitialAndWaypointsPublisher(Node):
     def __init__(self):
         super().__init__('initial_and_waypoints_publisher')
 
+        # QoS 설정
         initialpose_qos = QoSProfile(depth=10)
+        initialpose_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
         waypoints_qos = QoSProfile(depth=10)
         waypoints_qos.durability = DurabilityPolicy.VOLATILE
 
@@ -23,7 +25,6 @@ class InitialAndWaypointsPublisher(Node):
         self.start_time = self.get_clock().now()
         self.current_state = 'initial'
         self.waypoints = self.generate_waypoints()
-
         self.current_waypoint_index = 0
 
         timer_period = 0.5
@@ -93,7 +94,7 @@ class InitialAndWaypointsPublisher(Node):
                 initialpose_msg.pose.pose.orientation.z = 0.0095
                 initialpose_msg.pose.pose.orientation.w = 0.9999
                 self.initialpose_publisher.publish(initialpose_msg)
-                self.get_logger().info('Published /initialpose')
+                self.get_logger().info(f'Published /initialpose with position: x={initialpose_msg.pose.pose.position.x}, y={initialpose_msg.pose.pose.position.y}')
             else:
                 self.current_state = 'waypoints'
                 self.get_logger().info('Switching to waypoint navigation')
