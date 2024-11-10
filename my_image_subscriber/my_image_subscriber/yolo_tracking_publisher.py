@@ -41,7 +41,7 @@ class YOLOTrackingPublisher(Node):
         results = self.model.track(source=frame, show=False, tracker='bytetrack.yaml')
 
         highest_confidence_detection = None
-        highest_confidence = 0.0
+        highest_confidence = 0.4
 
         # Iterate over results to find the object with the highest confidence
         for result in results:
