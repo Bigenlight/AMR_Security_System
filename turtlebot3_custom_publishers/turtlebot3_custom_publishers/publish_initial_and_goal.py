@@ -25,7 +25,9 @@ class InitialAndWaypointsPublisher(Node):
         self.waypoints = self.generate_waypoints()
 
         self.current_waypoint_index = 0
-        self.timer = self.create_timer(0.5, self.publish_messages)
+
+        timer_period = 0.5
+        self.timer = self.create_timer(timer_period, self.publish_initialpose)
 
     def generate_waypoints(self):
         waypoints = []
@@ -77,11 +79,11 @@ class InitialAndWaypointsPublisher(Node):
 
         return waypoints
 
-    def publish_messages(self):
+    def publish_initialpose(self):
         current_time = self.get_clock().now()
+        elapsed_time = (current_time - self.start_time).nanoseconds / 1e9
 
         if self.current_state == 'initial':
-            elapsed_time = (current_time - self.start_time).nanoseconds / 1e9
             if elapsed_time < 10.0:
                 initialpose_msg = PoseWithCovarianceStamped()
                 initialpose_msg.header.frame_id = 'map'
@@ -94,55 +96,62 @@ class InitialAndWaypointsPublisher(Node):
                 self.get_logger().info('Published /initialpose')
             else:
                 self.current_state = 'waypoints'
-                self.start_time = self.get_clock().now()
-                self.get_logger().info('Switching to publishing /waypoints')
-                self.send_goal(self.waypoints[self.current_waypoint_index])
+                self.get_logger().info('Switching to waypoint navigation')
+                self.publish_next_waypoint()
+
+    def publish_next_waypoint(self):
+        if self.current_waypoint_index < len(self.waypoints):
+            waypoint = self.waypoints[self.current_waypoint_index]
+            marker_array = MarkerArray()
+
+            # 마커 생성
+            marker = self.create_marker_from_pose(waypoint, self.current_waypoint_index + 1)
+            marker_array.markers.append(marker)
+            self.waypoints_publisher.publish(marker_array)
+
+            self.get_logger().info(f'Published waypoint {self.current_waypoint_index}')
+            self.send_goal(waypoint)
+        else:
+            self.get_logger().info('All waypoints reached. Shutting down.')
+            self.timer.cancel()
+            self.destroy_node()
+            rclpy.shutdown()
 
     def send_goal(self, waypoint: PoseStamped):
         if not self.goal_client.wait_for_server(timeout_sec=5.0):
-            self.get_logger().error('NavigateToPose 액션 서버가 사용 불가능합니다!')
+            self.get_logger().error('NavigateToPose action server is unavailable!')
             return
 
         goal_msg = NavigateToPose.Goal()
         goal_msg.pose = waypoint
 
-        self.get_logger().info(f'목표 지점 전송 중: (x: {waypoint.pose.position.x}, y: {waypoint.pose.position.y})')
+        self.get_logger().info(f'Sending goal: (x: {waypoint.pose.position.x}, y: {waypoint.pose.position.y})')
         send_goal_future = self.goal_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
         send_goal_future.add_done_callback(self.goal_response_callback)
 
     def goal_response_callback(self, future):
         goal_handle = future.result()
         if not goal_handle.accepted:
-            self.get_logger().info('목표가 거부되었습니다.')
+            self.get_logger().info('Goal was rejected.')
             return
 
-        self.get_logger().info('목표가 수락되었습니다.')
+        self.get_logger().info('Goal was accepted.')
         goal_handle.get_result_async().add_done_callback(self.get_result_callback)
 
     def get_result_callback(self, future):
+        result = future.result().result
         status = future.result().status
 
-        if status == 4:
-            self.get_logger().info('목표가 취소되었습니다.')
-        elif status == 5:
-            self.get_logger().info('목표 달성에 실패했습니다.')
-        elif status == 3:
-            self.get_logger().info('목표 달성에 성공했습니다!')
-
-            # 다음 웨이포인트로 이동
+        if status == 3:  # 성공 상태
+            self.get_logger().info('Successfully reached the waypoint!')
             self.current_waypoint_index += 1
-            if self.current_waypoint_index < len(self.waypoints):
-                self.get_logger().info(f'다음 웨이포인트로 이동: {self.current_waypoint_index}')
-                self.send_goal(self.waypoints[self.current_waypoint_index])
-            else:
-                self.get_logger().info('모든 웨이포인트 도달 완료. 노드를 종료합니다.')
-                self.timer.cancel()
-                self.destroy_node()
-                rclpy.shutdown()
+            self.publish_next_waypoint()  # 다음 웨이포인트 발행
+        else:
+            self.get_logger().info('Failed to reach the waypoint or was canceled.')
 
     def feedback_callback(self, feedback_msg):
         feedback = feedback_msg.feedback
-        self.get_logger().info(f'피드백 수신: (x: {feedback.current_pose.pose.position.x}, y: {feedback.current_pose.pose.position.y})')
+        self.get_logger().info(f'Received feedback: (x: {feedback.current_pose.pose.position.x}, y: {feedback.current_pose.pose.position.y})')
 
     def create_marker_from_pose(self, pose_stamped: PoseStamped, marker_id: int) -> Marker:
         marker = Marker()
