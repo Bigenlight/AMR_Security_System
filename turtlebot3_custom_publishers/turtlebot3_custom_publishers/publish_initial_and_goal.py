@@ -110,13 +110,13 @@ class InitialAndWaypointsPublisher(Node):
                 initialpose_msg = PoseWithCovarianceStamped()
                 initialpose_msg.header.frame_id = 'map'
                 initialpose_msg.header.stamp = current_time.to_msg()
-                initialpose_msg.pose.pose.position.x = 0.24999737739562988
-                initialpose_msg.pose.pose.position.y = -0.7093759775161743
+                initialpose_msg.pose.pose.position.x = 0.03124990686774254  # 원래 값 유지
+                initialpose_msg.pose.pose.position.y = -0.009375147521495819  # 원래 값 유지
                 initialpose_msg.pose.pose.position.z = 0.0
                 initialpose_msg.pose.pose.orientation.x = 0.0
                 initialpose_msg.pose.pose.orientation.y = 0.0
-                initialpose_msg.pose.pose.orientation.z = 0.9988731702878725
-                initialpose_msg.pose.pose.orientation.w = 0.0474593476467486
+                initialpose_msg.pose.pose.orientation.z = 0.009502555788036916
+                initialpose_msg.pose.pose.orientation.w = 0.9999548496974727
                 initialpose_msg.pose.covariance = [
                     0.25, 0.0, 0.0, 0.0, 0.0, 0.0,
                     0.0, 0.25, 0.0, 0.0, 0.0, 0.0,
@@ -170,10 +170,10 @@ class InitialAndWaypointsPublisher(Node):
         """
         markers = []
 
-        # Marker 0: 기본 CUBE
+        # Marker 0: TYPE 0 (CUBE)
         marker0 = Marker()
         marker0.header.frame_id = pose_stamped.header.frame_id
-        marker0.header.stamp = rclpy.time.Time(seconds=1731210360, nanoseconds=34132462).to_msg()
+        marker0.header.stamp = self.get_clock().now().to_msg()  # 현재 시간으로 설정
         marker0.ns = ''
         marker0.id = 0
         marker0.type = Marker.CUBE
@@ -183,17 +183,17 @@ class InitialAndWaypointsPublisher(Node):
         marker0.scale.y = 0.05
         marker0.scale.z = 0.02
         marker0.color.r = 0.0
-        marker0.color.g = 255.0
+        marker0.color.g = 1.0  # 초록색 (0.0 - 1.0 범위)
         marker0.color.b = 0.0
         marker0.color.a = 1.0
         marker0.lifetime = rclpy.duration.Duration(seconds=0).to_msg()
         marker0.frame_locked = False
         markers.append(marker0)
 
-        # Marker 1: ARROW
+        # Marker 1: TYPE 2 (ARROW)
         marker1 = Marker()
         marker1.header.frame_id = pose_stamped.header.frame_id
-        marker1.header.stamp = rclpy.time.Time(seconds=1731210360, nanoseconds=34132462).to_msg()
+        marker1.header.stamp = self.get_clock().now().to_msg()  # 현재 시간으로 설정
         marker1.ns = ''
         marker1.id = 1
         marker1.type = Marker.ARROW
@@ -202,7 +202,7 @@ class InitialAndWaypointsPublisher(Node):
         marker1.scale.x = 0.3
         marker1.scale.y = 0.05
         marker1.scale.z = 0.02
-        marker1.color.r = 255.0
+        marker1.color.r = 1.0  # 빨간색 (0.0 - 1.0 범위)
         marker1.color.g = 0.0
         marker1.color.b = 0.0
         marker1.color.a = 1.0
@@ -210,10 +210,10 @@ class InitialAndWaypointsPublisher(Node):
         marker1.frame_locked = False
         markers.append(marker1)
 
-        # Marker 2: TEXT_VIEW_FACING
+        # Marker 2: TYPE 9 (TEXT_VIEW_FACING)
         marker2 = Marker()
         marker2.header.frame_id = pose_stamped.header.frame_id
-        marker2.header.stamp = rclpy.time.Time(seconds=1731210360, nanoseconds=34132462).to_msg()
+        marker2.header.stamp = self.get_clock().now().to_msg()  # 현재 시간으로 설정
         marker2.ns = ''
         marker2.id = 2
         marker2.type = Marker.TEXT_VIEW_FACING
@@ -222,7 +222,7 @@ class InitialAndWaypointsPublisher(Node):
         marker2.pose.position.z += 0.2  # 텍스트를 위로 올림
         marker2.scale.z = 0.07
         marker2.color.r = 0.0
-        marker2.color.g = 255.0
+        marker2.color.g = 1.0  # 초록색 (0.0 - 1.0 범위)
         marker2.color.b = 0.0
         marker2.color.a = 1.0
         marker2.text = 'wp_1'
