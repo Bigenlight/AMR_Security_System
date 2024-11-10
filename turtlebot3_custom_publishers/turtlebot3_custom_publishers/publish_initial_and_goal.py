@@ -4,19 +4,23 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from visualization_msgs.msg import Marker, MarkerArray
-from rclpy.qos import QoSProfile
+from rclpy.qos import QoSProfile, DurabilityPolicy
 import copy
 
 class InitialAndWaypointsPublisher(Node):
     def __init__(self):
         super().__init__('initial_and_waypoints_publisher')
 
-        # QoS 설정: default QoS (volatile)
-        qos_profile = QoSProfile(depth=10)
+        # QoS 설정: initialpose는 기본 QoS (volatile)
+        initialpose_qos = QoSProfile(depth=10)
+
+        # QoS 설정: waypoints는 TRANSIENT_LOCAL Durability
+        waypoints_qos = QoSProfile(depth=10)
+        waypoints_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
 
         # 퍼블리셔 생성
-        self.initialpose_publisher = self.create_publisher(PoseWithCovarianceStamped, '/initialpose', qos_profile)
-        self.waypoints_publisher = self.create_publisher(MarkerArray, '/waypoints', qos_profile)  # MarkerArray 퍼블리셔
+        self.initialpose_publisher = self.create_publisher(PoseWithCovarianceStamped, '/initialpose', initialpose_qos)
+        self.waypoints_publisher = self.create_publisher(MarkerArray, '/waypoints', waypoints_qos)  # MarkerArray 퍼블리셔
 
         # 노드 시작 시간 기록
         self.start_time = self.get_clock().now()
