@@ -14,26 +14,29 @@ class InitialAndWaypointsPublisher(Node):
 
         # QoS 설정
         initialpose_qos = QoSProfile(depth=10)
-        initialpose_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
         waypoints_qos = QoSProfile(depth=10)
         waypoints_qos.durability = DurabilityPolicy.VOLATILE
 
+        # 퍼블리셔 생성
         self.initialpose_publisher = self.create_publisher(PoseWithCovarianceStamped, '/initialpose', initialpose_qos)
         self.waypoints_publisher = self.create_publisher(MarkerArray, '/waypoints', waypoints_qos)
+
+        # 액션 클라이언트 생성
         self.goal_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
 
+        # 노드 시작 시간 기록
         self.start_time = self.get_clock().now()
         self.current_state = 'initial'
         self.waypoints = self.generate_waypoints()
         self.current_waypoint_index = 0
 
-        timer_period = 0.5
-        self.timer = self.create_timer(timer_period, self.publish_initialpose)
+        # 타이머 설정: 0.5초마다 콜백 호출
+        self.timer = self.create_timer(0.5, self.publish_messages)
 
     def generate_waypoints(self):
         waypoints = []
 
-        # 웨이포인트 0
+        # 웨이포인트 0 - 사용자 지정
         pose0 = PoseStamped()
         pose0.header.frame_id = 'map'
         pose0.pose.position.x = 0.3625
@@ -80,36 +83,35 @@ class InitialAndWaypointsPublisher(Node):
 
         return waypoints
 
-    def publish_initialpose(self):
+    def publish_messages(self):
         current_time = self.get_clock().now()
         elapsed_time = (current_time - self.start_time).nanoseconds / 1e9
 
-        if self.current_state == 'initial':
-            if elapsed_time < 10.0:
-                initialpose_msg = PoseWithCovarianceStamped()
-                initialpose_msg.header.frame_id = 'map'
-                initialpose_msg.header.stamp = current_time.to_msg()
-                initialpose_msg.pose.pose.position.x = 0.03125
-                initialpose_msg.pose.pose.position.y = -0.0094
-                initialpose_msg.pose.pose.orientation.z = 0.0095
-                initialpose_msg.pose.pose.orientation.w = 0.9999
-                self.initialpose_publisher.publish(initialpose_msg)
-                self.get_logger().info(f'Published /initialpose with position: x={initialpose_msg.pose.pose.position.x}, y={initialpose_msg.pose.pose.position.y}')
-            else:
-                self.current_state = 'waypoints'
-                self.get_logger().info('Switching to waypoint navigation')
-                self.publish_next_waypoint()
+        if self.current_state == 'initial' and elapsed_time < 10.0:
+            initialpose_msg = PoseWithCovarianceStamped()
+            initialpose_msg.header.frame_id = 'map'
+            initialpose_msg.header.stamp = current_time.to_msg()
+            initialpose_msg.pose.pose.position.x = 0.03125
+            initialpose_msg.pose.pose.position.y = -0.0094
+            initialpose_msg.pose.pose.orientation.z = 0.0095
+            initialpose_msg.pose.pose.orientation.w = 0.9999
+            initialpose_msg.pose.covariance[0] = 0.25  # 예시로 일부만 설정
+            initialpose_msg.pose.covariance[7] = 0.25
+            initialpose_msg.pose.covariance[35] = 0.06853891909122467
+            self.initialpose_publisher.publish(initialpose_msg)
+            self.get_logger().info('Published /initialpose')
+        elif self.current_state == 'initial' and elapsed_time >= 10.0:
+            # 상태 전환
+            self.current_state = 'waypoints'
+            self.publish_next_waypoint()
 
     def publish_next_waypoint(self):
         if self.current_waypoint_index < len(self.waypoints):
             waypoint = self.waypoints[self.current_waypoint_index]
             marker_array = MarkerArray()
-
-            # 마커 생성
             marker = self.create_marker_from_pose(waypoint, self.current_waypoint_index + 1)
             marker_array.markers.append(marker)
             self.waypoints_publisher.publish(marker_array)
-
             self.get_logger().info(f'Published waypoint {self.current_waypoint_index}')
             self.send_goal(waypoint)
         else:
@@ -125,7 +127,6 @@ class InitialAndWaypointsPublisher(Node):
 
         goal_msg = NavigateToPose.Goal()
         goal_msg.pose = waypoint
-
         self.get_logger().info(f'Sending goal: (x: {waypoint.pose.position.x}, y: {waypoint.pose.position.y})')
         send_goal_future = self.goal_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
         send_goal_future.add_done_callback(self.goal_response_callback)
@@ -140,13 +141,10 @@ class InitialAndWaypointsPublisher(Node):
         goal_handle.get_result_async().add_done_callback(self.get_result_callback)
 
     def get_result_callback(self, future):
-        result = future.result().result
-        status = future.result().status
-
-        if status == 3:  # 성공 상태
+        if future.result().status == 3:
             self.get_logger().info('Successfully reached the waypoint!')
             self.current_waypoint_index += 1
-            self.publish_next_waypoint()  # 다음 웨이포인트 발행
+            self.publish_next_waypoint()
         else:
             self.get_logger().info('Failed to reach the waypoint or was canceled.')
 
@@ -157,6 +155,7 @@ class InitialAndWaypointsPublisher(Node):
     def create_marker_from_pose(self, pose_stamped: PoseStamped, marker_id: int) -> Marker:
         marker = Marker()
         marker.header.frame_id = pose_stamped.header.frame_id
+        marker.header.stamp = self.get_clock().now().to_msg()
         marker.ns = 'waypoints'
         marker.id = marker_id
         marker.type = Marker.CUBE
