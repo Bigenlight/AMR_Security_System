@@ -38,7 +38,7 @@ class InitialAndWaypointsPublisher(Node):
 
         # 각 웨이포인트별 발행 횟수 추적
         self.current_waypoint_index = 0
-        self.max_publishes_per_waypoint = 20  # 각 웨이포인트당 10번 발행
+        self.max_publishes_per_waypoint = 10  # 각 웨이포인트당 10번 발행
 
         # 타이머 설정: 0.5초마다 콜백 호출
         timer_period = 0.5  # 초 단위
@@ -170,16 +170,23 @@ class InitialAndWaypointsPublisher(Node):
         if marker_id % 3 == 1:
             marker.type = Marker.TEXT_VIEW_FACING
             marker.text = f'wp_{marker_id}'
+            marker.scale.z = 0.3  # 텍스트 크기 증가
+            marker.pose.position.z += 0.5  # 텍스트를 위로 올림
         elif marker_id % 3 == 2:
             marker.type = Marker.ARROW
+            marker.scale.x = 0.3
+            marker.scale.y = 0.05
+            marker.scale.z = 0.02
+            marker.pose.position.z += 0.0  # 화살표는 지면에 위치
         else:
             marker.type = Marker.CUBE
+            marker.scale.x = 0.07
+            marker.scale.y = 0.07
+            marker.scale.z = 0.07
+            marker.pose.position.z += 0.0  # 큐브는 지면에 위치
 
         marker.action = Marker.ADD
         marker.pose = pose_stamped.pose
-        marker.scale.x = 0.07
-        marker.scale.y = 0.07
-        marker.scale.z = 0.07
         marker.color.r = 0.0
         marker.color.g = 1.0  # 초록색
         marker.color.b = 0.0
@@ -201,7 +208,7 @@ class InitialAndWaypointsPublisher(Node):
         goal_msg = NavigateToPose.Goal()
         goal_msg.pose = waypoint
 
-        self.get_logger().info(f'Sending goal {waypoint.pose.position.x}, {waypoint.pose.position.y}')
+        self.get_logger().info(f'Sending goal ({waypoint.pose.position.x}, {waypoint.pose.position.y})')
         send_goal_future = self.goal_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
         send_goal_future.add_done_callback(self.goal_response_callback)
 
@@ -236,7 +243,7 @@ class InitialAndWaypointsPublisher(Node):
         목표 지점 도착 중 피드백을 처리하는 콜백 함수.
         """
         feedback = feedback_msg.feedback
-        self.get_logger().info(f'Received feedback: {feedback.current_pose.pose.position.x}, {feedback.current_pose.pose.position.y}')
+        self.get_logger().info(f'Received feedback: ({feedback.current_pose.pose.position.x}, {feedback.current_pose.pose.position.y})')
 
 def main(args=None):
     rclpy.init(args=args)
