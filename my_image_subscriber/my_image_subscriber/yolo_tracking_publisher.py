@@ -115,18 +115,14 @@ class YOLOTrackingPublisher(Node):
         Callback after sending navigation cancel request.
         """
         try:
-            cancel_response = future.result()
-            self.get_logger().info(f'Cancel response: {cancel_response}')
-            if len(cancel_response.goals_canceling) > 0:
+            response = future.result()
+            if len(response.goals_canceling) > 0:
                 self.get_logger().info('Navigation goals have been successfully cancelled.')
             else:
                 self.get_logger().warn('There are no navigation goals to cancel.')
         except Exception as e:
             self.get_logger().error(f'Error occurred while cancelling navigation: {e}')
 
-    def destroy_node(self):
-        super().destroy_node()
-        self.cap.release()
 
 def main(args=None):
     rclpy.init(args=args)
