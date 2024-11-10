@@ -50,18 +50,18 @@ class InitialAndWaypointsPublisher(Node):
         """
         waypoints = []
 
-        # **웨이포인트 0 (사용자가 제공한 데이터로 추가됨)**
+        # **웨이포인트 0 (사용자가 제공한 새로운 데이터로 수정됨)**
         pose0 = PoseStamped()
         pose0.header.frame_id = 'map'
-        pose0.header.stamp.sec = 1731216655
-        pose0.header.stamp.nanosec = 797560055
-        pose0.pose.position.x = 0.33124974370002747
-        pose0.pose.position.y = -0.07812635600566864
+        pose0.header.stamp.sec = 1731217590
+        pose0.header.stamp.nanosec = 700270980
+        pose0.pose.position.x = 0.2999995946884155
+        pose0.pose.position.y = -0.09687630087137222
         pose0.pose.position.z = 0.0
         pose0.pose.orientation.x = 0.0
         pose0.pose.orientation.y = 0.0
-        pose0.pose.orientation.z = -0.6986419086240582
-        pose0.pose.orientation.w = 0.7154715113225216
+        pose0.pose.orientation.z = 0.01427986268447033
+        pose0.pose.orientation.w = 0.999898037562687
         waypoints.append(pose0)
 
         # 기존 웨이포인트 1
@@ -187,7 +187,7 @@ class InitialAndWaypointsPublisher(Node):
         # Marker 0: TYPE 0 (CUBE)
         marker0 = Marker()
         marker0.header.frame_id = pose_stamped.header.frame_id
-        marker0.header.stamp = self.get_clock().now().to_msg()  # 현재 시간으로 설정
+        marker0.header.stamp = pose_stamped.header.stamp  # 제공된 타임스탬프로 설정
         marker0.ns = ''
         marker0.id = 0
         marker0.type = Marker.CUBE
@@ -207,15 +207,15 @@ class InitialAndWaypointsPublisher(Node):
         # Marker 1: TYPE 2 (ARROW)
         marker1 = Marker()
         marker1.header.frame_id = pose_stamped.header.frame_id
-        marker1.header.stamp = self.get_clock().now().to_msg()  # 현재 시간으로 설정
+        marker1.header.stamp = pose_stamped.header.stamp  # 제공된 타임스탬프로 설정
         marker1.ns = ''
         marker1.id = 1
         marker1.type = Marker.ARROW
         marker1.action = Marker.ADD
         marker1.pose = pose_stamped.pose
-        marker1.scale.x = 0.3
+        marker1.scale.x = 0.05
         marker1.scale.y = 0.05
-        marker1.scale.z = 0.02
+        marker1.scale.z = 0.05
         marker1.color.r = 1.0  # 빨간색 (0.0 - 1.0 범위)
         marker1.color.g = 0.0
         marker1.color.b = 0.0
@@ -227,7 +227,7 @@ class InitialAndWaypointsPublisher(Node):
         # Marker 2: TYPE 9 (TEXT_VIEW_FACING)
         marker2 = Marker()
         marker2.header.frame_id = pose_stamped.header.frame_id
-        marker2.header.stamp = self.get_clock().now().to_msg()  # 현재 시간으로 설정
+        marker2.header.stamp = pose_stamped.header.stamp  # 제공된 타임스탬프로 설정
         marker2.ns = ''
         marker2.id = 2
         marker2.type = Marker.TEXT_VIEW_FACING
@@ -239,7 +239,7 @@ class InitialAndWaypointsPublisher(Node):
         marker2.color.g = 1.0  # 초록색 (0.0 - 1.0 범위)
         marker2.color.b = 0.0
         marker2.color.a = 1.0
-        marker2.text = 'wp_1'
+        marker2.text = 'wp_0'  # 텍스트를 'wp_0'으로 수정
         marker2.lifetime = rclpy.duration.Duration(seconds=0).to_msg()
         marker2.frame_locked = False
         markers.append(marker2)
@@ -252,7 +252,7 @@ class InitialAndWaypointsPublisher(Node):
         """
         marker = Marker()
         marker.header.frame_id = pose_stamped.header.frame_id
-        marker.header.stamp = self.get_clock().now().to_msg()
+        marker.header.stamp = pose_stamped.header.stamp  # 제공된 타임스탬프로 설정
         marker.ns = 'waypoints'
         marker.id = marker_id
 
