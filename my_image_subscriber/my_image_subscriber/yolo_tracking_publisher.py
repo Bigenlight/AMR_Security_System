@@ -24,7 +24,7 @@ class YOLOTrackingPublisher(Node):
 
         # Bridge and Model
         self.bridge = CvBridge()
-        self.model = YOLO('/home/theo/1_ws/src/best.pt')  # Update the model path as needed
+        self.model = YOLO('/home/rokey3/1_ws/src/best.pt')  # Update the model path as needed
 
         # Video capture setup
         self.cap = cv2.VideoCapture(0)  # Adjust this to your camera source
