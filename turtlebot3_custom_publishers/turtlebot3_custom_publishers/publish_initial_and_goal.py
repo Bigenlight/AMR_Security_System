@@ -50,7 +50,21 @@ class InitialAndWaypointsPublisher(Node):
         """
         waypoints = []
 
-        # 웨이포인트 1 (수정됨)
+        # **웨이포인트 0 (사용자가 제공한 데이터로 추가됨)**
+        pose0 = PoseStamped()
+        pose0.header.frame_id = 'map'
+        pose0.header.stamp.sec = 1731216655
+        pose0.header.stamp.nanosec = 797560055
+        pose0.pose.position.x = 0.33124974370002747
+        pose0.pose.position.y = -0.07812635600566864
+        pose0.pose.position.z = 0.0
+        pose0.pose.orientation.x = 0.0
+        pose0.pose.orientation.y = 0.0
+        pose0.pose.orientation.z = -0.6986419086240582
+        pose0.pose.orientation.w = 0.7154715113225216
+        waypoints.append(pose0)
+
+        # 기존 웨이포인트 1
         pose1 = PoseStamped()
         pose1.header.frame_id = 'map'
         pose1.pose.position.x = 0.24999737739562988
