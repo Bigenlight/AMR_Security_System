@@ -11,25 +11,27 @@ class DetectionTracker(Node):
         super().__init__('detection_tracker')
 
         # 파라미터 설정
+        self.declare_parameter('dtodconversion', 50000)
         self.declare_parameter('image_width', 640)
         self.declare_parameter('image_height', 480)
         self.declare_parameter('desired_distance', 1.0)  # 미터 단위
         self.declare_parameter('Kp_yaw', 0.002)
-        self.declare_parameter('Kp_linear_increase', 0.1)
-        self.declare_parameter('Kp_linear_decrease', 0.1)
-        self.declare_parameter('max_linear_speed', 0.5)    # m/s
+        self.declare_parameter('Kp_linear', 0.5)  # 선형 속도에 대한 비례 상수
+        self.declare_parameter('max_linear_speed', 0.3)    # m/s
         self.declare_parameter('min_linear_speed', 0.0)    # m/s
         self.declare_parameter('desired_speed', 0.2)       # m/s
+        self.declare_parameter('tolerance_rate', 0.05)     # 5%
 
+        self.dconversion = self.get_parameter('dtodconversion').get_parameter_value().double_value
         self.image_width = self.get_parameter('image_width').get_parameter_value().integer_value
         self.image_height = self.get_parameter('image_height').get_parameter_value().integer_value
         self.desired_d = self.get_parameter('desired_distance').get_parameter_value().double_value
         self.Kp_yaw = self.get_parameter('Kp_yaw').get_parameter_value().double_value
-        self.Kp_linear_increase = self.get_parameter('Kp_linear_increase').get_parameter_value().double_value
-        self.Kp_linear_decrease = self.get_parameter('Kp_linear_decrease').get_parameter_value().double_value
+        self.Kp_linear = self.get_parameter('Kp_linear').get_parameter_value().double_value
         self.max_linear_speed = self.get_parameter('max_linear_speed').get_parameter_value().double_value
         self.min_linear_speed = self.get_parameter('min_linear_speed').get_parameter_value().double_value
         self.desired_speed = self.get_parameter('desired_speed').get_parameter_value().double_value
+        self.tolerance_rate = self.get_parameter('tolerance_rate').get_parameter_value().double_value
 
         # 퍼블리셔 설정
         self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
@@ -57,7 +59,7 @@ class DetectionTracker(Node):
             detections = json.loads(msg.data)
             # detections는 리스트로 가정
             for detection in detections:
-                if detection.get('class_number') == 0 and detection.get('confidence', 0.0) > 0.2:
+                if detection.get('class_number') == 0 and detection.get('confidence', 0.0) > 0.7:
                     self.target_found = True
                     self.latest_detection = detection
                     self.get_logger().info(f"Target detected: {detection}")
@@ -67,6 +69,8 @@ class DetectionTracker(Node):
             self.latest_detection = None
         except json.JSONDecodeError as e:
             self.get_logger().error(f"JSON Decode Error: {e}")
+        except Exception as e:
+            self.get_logger().error(f"Error processing detection info: {e}")
 
     def estimate_distance(self, diagonal_length):
         """
@@ -75,12 +79,7 @@ class DetectionTracker(Node):
         """
         if diagonal_length == 0:
             return float('inf')
-        # 카메라의 초점 거리(f)와 실제 물체의 높이(H)를 알고 있다고 가정
-        # 거리는 (H * f) / h 이미지에서의 물체 높이
-        # 여기서는 단순히 대각선 길이를 이용한 예시 계산
-        focal_length = 700  # 예시 값 (픽셀 단위)
-        real_height = 1.5    # 실제 물체의 높이 (미터 단위)
-        estimated_distance = (real_height * focal_length) / diagonal_length
+        estimated_distance = dconversion / diagonal_length
         return estimated_distance
 
     def track_target(self):
@@ -106,35 +105,32 @@ class DetectionTracker(Node):
         diagonal = math.sqrt(width**2 + height**2)
         estimated_d = self.estimate_distance(diagonal)
 
-        # 선형 속도 조절
-        linear_x = self.desired_speed
-        if self.desired_d < estimated_d * 0.95:
-            # 선형 속도 증가
-            linear_x += self.Kp_linear_increase * (estimated_d - self.desired_d)
-            linear_x = min(linear_x, self.max_linear_speed)
-        elif self.desired_d > estimated_d * 1.05:
-            # 선형 속도 감소
-            linear_x -= self.Kp_linear_decrease * (self.desired_d - estimated_d)
-            linear_x = max(linear_x, self.min_linear_speed)
+        # 거리 오차 계산
+        distance_error = self.desired_d - estimated_d
+
+        # 허용 오차 계산
+        tolerance = self.tolerance_rate * self.desired_d
+
+        # 선형 속도 계산
+        if abs(distance_error) <= tolerance:
+            linear_x = 0
+        else:
+            linear_x = self.Kp_linear * distance_error
+            # 선형 속도 제한
+            linear_x = max(min(linear_x, self.max_linear_speed), self.min_linear_speed)
 
         # 트위스트 메시지 작성
         twist = Twist()
         twist.linear.x = linear_x
         twist.angular.z = angular_z
 
-        self.get_logger().info(f"Yaw Error: {error_x:.2f}, Estimated Distance: {estimated_d:.2f} m, "
+        self.get_logger().info(f"Yaw Error: {error_x:.2f}, Distance Error: {distance_error:.2f} m, "
+                               f"Estimated Distance: {estimated_d:.2f} m, "
                                f"Linear Speed: {linear_x:.2f} m/s, Angular Speed: {angular_z:.2f} rad/s")
 
         # cmd_vel 퍼블리시
         self.cmd_vel_pub.publish(twist)
 
-    def run(self):
-        """
-        메인 루프.
-        """
-        timer_period = 0.1  # 10Hz
-        self.timer = self.create_timer(timer_period, self.timer_callback)
-        self.get_logger().debug("Target found. Calling track_target()")
     def timer_callback(self):
         """
         타이머 콜백 함수.
@@ -146,6 +142,17 @@ class DetectionTracker(Node):
             self.get_logger().debug("No target found. Skipping track_target.")
             # 네비게이션 모드에서는 별도의 동작을 하지 않음
             pass
+
+    def run(self):
+        """
+        메인 루프.
+        """
+        timer_period = 0.1  # 10Hz
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.get_logger().debug("Timer started.")
+
+    def destroy_node(self):
+        super().destroy_node()
 
 def main(args=None):
     rclpy.init(args=args)
