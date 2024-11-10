@@ -13,7 +13,7 @@ class YOLOTrackingPublisher(Node):
         self.cmd_publisher = self.create_publisher(Twist, '/cmd_vel', 10)
         self.bridge = CvBridge()
         self.model = YOLO('/home/rokey3/1_ws/src/best.pt')
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(1)
         self.timer = self.create_timer(0.1, self.timer_callback)  # Adjust timer frequency as needed
 
         # Screen center x-coordinate
