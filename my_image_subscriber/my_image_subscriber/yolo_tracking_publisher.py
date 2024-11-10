@@ -106,10 +106,8 @@ class YOLOTrackingPublisher(Node):
             self.get_logger().error('Unable to connect to FollowWaypoints action server!')
             return
 
-        # Create a CancelGoal request to cancel all goals
-        cancel_request = CancelGoal.Request()
-        # Leave goal_info empty to cancel all goals
-        cancel_future = self.follow_waypoints_client.cancel_goals_async(cancel_request)
+        # Send a cancel request to the action server
+        cancel_future = self.follow_waypoints_client._cancel_goal_async()
         cancel_future.add_done_callback(self.cancel_navigation_callback)
 
     def cancel_navigation_callback(self, future):
@@ -118,6 +116,7 @@ class YOLOTrackingPublisher(Node):
         """
         try:
             cancel_response = future.result()
+            self.get_logger().info(f'Cancel response: {cancel_response}')
             if len(cancel_response.goals_canceling) > 0:
                 self.get_logger().info('Navigation goals have been successfully cancelled.')
             else:
