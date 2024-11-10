@@ -1,9 +1,0 @@
-Metadata-Version: 2.1
-Name: my_video_package
-Version: 0.0.0
-Summary: ROS2 비디오 캡처 노드 패키지
-Maintainer: rokey
-Maintainer-email: 100rudtjs@naver.com
-License: Apache-2.0
-Requires-Dist: setuptools
-Requires-Dist: opencv-python

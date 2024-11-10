@@ -1,2 +1,0 @@
-[console_scripts]
-publish_initial_and_goal = turtlebot3_custom_publishers.publish_initial_and_goal:main
