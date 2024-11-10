@@ -9,9 +9,11 @@ setup(
     version='0.0.0',
     packages=find_packages(include=[package_name, f'{package_name}.*']),
     data_files=[
-        # Include any necessary data files here
-        (os.path.join('share', package_name, 'templates'), glob.glob(os.path.join(package_name, 'templates', '*.html'))),
-        # Add launch files or other resources if needed
+        # Install package.xml
+        (os.path.join('share', package_name), ['package.xml']),
+        # Install configuration files
+        (os.path.join('share', package_name, 'config'), glob.glob(os.path.join(package_name, 'config', '*.yaml'))),
+        # Include other data files if necessary
     ],
     install_requires=[
         'setuptools',
@@ -26,7 +28,7 @@ setup(
     maintainer_email='tpingouin@gmail.com',
     description='An image subscriber using ROS2 and YOLO for tracking',
     license='TODO: License declaration',
-    tests_require=['pytest'],
+    #tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'image_subscriber = my_image_subscriber.image_subscriber:main',
