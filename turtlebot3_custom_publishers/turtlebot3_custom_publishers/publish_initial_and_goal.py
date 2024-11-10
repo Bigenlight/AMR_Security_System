@@ -25,11 +25,7 @@ class InitialAndWaypointsPublisher(Node):
         self.waypoints = self.generate_waypoints()
 
         self.current_waypoint_index = 0
-        self.waypoint_0_reached = False
-        self.waypoint_1_reached = False
-
-        timer_period = 0.5
-        self.timer = self.create_timer(timer_period, self.publish_messages)
+        self.timer = self.create_timer(0.5, self.publish_messages)
 
     def generate_waypoints(self):
         waypoints = []
@@ -90,7 +86,6 @@ class InitialAndWaypointsPublisher(Node):
                 initialpose_msg = PoseWithCovarianceStamped()
                 initialpose_msg.header.frame_id = 'map'
                 initialpose_msg.header.stamp = current_time.to_msg()
-                # 초기 위치 설정
                 initialpose_msg.pose.pose.position.x = 0.03125
                 initialpose_msg.pose.pose.position.y = -0.0094
                 initialpose_msg.pose.pose.orientation.z = 0.0095
@@ -101,34 +96,7 @@ class InitialAndWaypointsPublisher(Node):
                 self.current_state = 'waypoints'
                 self.start_time = self.get_clock().now()
                 self.get_logger().info('Switching to publishing /waypoints')
-
-        elif self.current_state == 'waypoints':
-            if self.current_waypoint_index < len(self.waypoints):
-                if (self.current_waypoint_index > 1 and not self.waypoint_0_reached and not self.waypoint_1_reached):
-                    self.get_logger().info('Waiting for waypoint 0 and 1 to be reached.')
-                    return
-
-                waypoint = self.waypoints[self.current_waypoint_index]
-                marker_array = MarkerArray()
-
-                if self.current_waypoint_index in [0, 1]:
-                    markers = self.create_markers_for_waypoint(waypoint, self.current_waypoint_index + 1)
-                    marker_array.markers.extend(markers)
-                    self.get_logger().info(f'Published waypoint {self.current_waypoint_index} with {len(markers)} markers.')
-                else:
-                    marker = self.create_marker_from_pose(waypoint, self.current_waypoint_index + 1)
-                    marker_array.markers.append(marker)
-                    self.get_logger().info(f'Published waypoint [ID: {marker.id}]')
-
-                self.waypoints_publisher.publish(marker_array)
-                self.send_goal(waypoint)
-
-                self.current_waypoint_index += 1
-            else:
-                self.get_logger().info('Finished publishing all waypoints. Shutting down node.')
-                self.timer.cancel()
-                self.destroy_node()
-                rclpy.shutdown()
+                self.send_goal(self.waypoints[self.current_waypoint_index])
 
     def send_goal(self, waypoint: PoseStamped):
         if not self.goal_client.wait_for_server(timeout_sec=5.0):
@@ -160,61 +128,21 @@ class InitialAndWaypointsPublisher(Node):
             self.get_logger().info('목표 달성에 실패했습니다.')
         elif status == 3:
             self.get_logger().info('목표 달성에 성공했습니다!')
-            if self.current_waypoint_index == 1:
-                self.waypoint_0_reached = True
-            elif self.current_waypoint_index == 2:
-                self.waypoint_1_reached = True
+
+            # 다음 웨이포인트로 이동
+            self.current_waypoint_index += 1
+            if self.current_waypoint_index < len(self.waypoints):
+                self.get_logger().info(f'다음 웨이포인트로 이동: {self.current_waypoint_index}')
+                self.send_goal(self.waypoints[self.current_waypoint_index])
+            else:
+                self.get_logger().info('모든 웨이포인트 도달 완료. 노드를 종료합니다.')
+                self.timer.cancel()
+                self.destroy_node()
+                rclpy.shutdown()
 
     def feedback_callback(self, feedback_msg):
         feedback = feedback_msg.feedback
         self.get_logger().info(f'피드백 수신: (x: {feedback.current_pose.pose.position.x}, y: {feedback.current_pose.pose.position.y})')
-
-    def create_markers_for_waypoint(self, pose_stamped: PoseStamped, waypoint_number: int) -> list:
-        markers = []
-
-        # Marker 0: TYPE 0 (CUBE)
-        marker0 = Marker()
-        marker0.header.frame_id = pose_stamped.header.frame_id
-        marker0.ns = ''
-        marker0.id = 0
-        marker0.type = Marker.CUBE
-        marker0.pose = pose_stamped.pose
-        marker0.scale.x = 0.3
-        marker0.scale.y = 0.05
-        marker0.scale.z = 0.02
-        marker0.color.g = 1.0
-        marker0.color.a = 1.0
-        markers.append(marker0)
-
-        # Marker 1: TYPE 2 (ARROW)
-        marker1 = Marker()
-        marker1.header.frame_id = pose_stamped.header.frame_id
-        marker1.ns = ''
-        marker1.id = 1
-        marker1.type = Marker.ARROW
-        marker1.pose = pose_stamped.pose
-        marker1.scale.x = 0.05
-        marker1.scale.y = 0.05
-        marker1.scale.z = 0.05
-        marker1.color.r = 1.0
-        marker1.color.a = 1.0
-        markers.append(marker1)
-
-        # Marker 2: TYPE 9 (TEXT_VIEW_FACING)
-        marker2 = Marker()
-        marker2.header.frame_id = pose_stamped.header.frame_id
-        marker2.ns = ''
-        marker2.id = 2
-        marker2.type = Marker.TEXT_VIEW_FACING
-        marker2.pose = pose_stamped.pose
-        marker2.pose.position.z += 0.2
-        marker2.scale.z = 0.07
-        marker2.color.g = 1.0
-        marker2.color.a = 1.0
-        marker2.text = f'wp_{waypoint_number}'
-        markers.append(marker2)
-
-        return markers
 
     def create_marker_from_pose(self, pose_stamped: PoseStamped, marker_id: int) -> Marker:
         marker = Marker()
