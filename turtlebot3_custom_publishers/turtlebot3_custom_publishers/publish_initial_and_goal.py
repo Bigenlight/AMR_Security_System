@@ -11,12 +11,12 @@ class InitialAndWaypointsPublisher(Node):
     def __init__(self):
         super().__init__('initial_and_waypoints_publisher')
 
-        # QoS 설정: initialpose는 기본 QoS (volatile)
+        # QoS 설정: initialpose는 기본 QoS (VOLATILE)
         initialpose_qos = QoSProfile(depth=10)
 
-        # QoS 설정: waypoints는 TRANSIENT_LOCAL Durability
+        # QoS 설정: waypoints는 VOLATILE Durability
         waypoints_qos = QoSProfile(depth=10)
-        waypoints_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
+        waypoints_qos.durability = DurabilityPolicy.VOLATILE
 
         # 퍼블리셔 생성
         self.initialpose_publisher = self.create_publisher(PoseWithCovarianceStamped, '/initialpose', initialpose_qos)
@@ -31,9 +31,10 @@ class InitialAndWaypointsPublisher(Node):
         # 웨이포인트 리스트 정의
         self.waypoints = self.generate_waypoints()
 
-        # 반복 횟수 카운터
-        self.publish_count = 0
-        self.max_publishes = 10  # 10번 반복
+        # 각 웨이포인트별 발행 횟수 추적
+        self.current_marker_index = 0
+        self.current_publish_count = 0
+        self.max_publishes = 10  # 각 웨이포인트당 10번 발행
 
         # 타이머 설정: 0.5초마다 콜백 호출
         timer_period = 0.5  # 초 단위
@@ -156,9 +157,9 @@ class InitialAndWaypointsPublisher(Node):
 
     def publish_messages(self):
         current_time = self.get_clock().now()
-        elapsed_time = (current_time - self.start_time).nanoseconds / 1e9  # 초 단위로 변환
 
         if self.current_state == 'initial':
+            elapsed_time = (current_time - self.start_time).nanoseconds / 1e9  # 초 단위로 변환
             if elapsed_time < 10.0:
                 # /initialpose 메시지 작성 및 발행
                 initialpose_msg = PoseWithCovarianceStamped()
@@ -189,22 +190,26 @@ class InitialAndWaypointsPublisher(Node):
                 self.get_logger().info('Switching to publishing /waypoints')
 
         elif self.current_state == 'waypoints':
-            if self.publish_count < self.max_publishes:
-                # Prepare MarkerArray
-                marker_array = MarkerArray()
-                for marker in self.waypoints:
+            if self.current_marker_index < len(self.waypoints):
+                if self.current_publish_count < self.max_publishes:
+                    marker = self.waypoints[self.current_marker_index]
                     marker_copy = copy.deepcopy(marker)
                     marker_copy.header.stamp = current_time.to_msg()
+
+                    marker_array = MarkerArray()
                     marker_array.markers.append(marker_copy)
-                    self.get_logger().info(f'Prepared /waypoints [ID: {marker_copy.id}]')
 
-                self.waypoints_publisher.publish(marker_array)
-                self.get_logger().info(f'Published waypoints array [{self.publish_count + 1}/{self.max_publishes}]')
+                    self.waypoints_publisher.publish(marker_array)
+                    self.get_logger().info(f'Published waypoint [ID: {marker_copy.id}] [{self.current_publish_count +1}/{self.max_publishes}]')
 
-                self.publish_count += 1
+                    self.current_publish_count +=1
+                else:
+                    # 현재 웨이포인트에 대한 발행 횟수 초기화 및 다음 웨이포인트로 이동
+                    self.current_publish_count = 0
+                    self.current_marker_index +=1
             else:
-                # 10번 발행 완료, 노드 종료
-                self.get_logger().info('Finished publishing waypoints 10 times. Shutting down node.')
+                # 모든 웨이포인트를 10번씩 발행 완료, 노드 종료
+                self.get_logger().info('Finished publishing all waypoints 10 times each. Shutting down node.')
                 self.timer.cancel()
                 self.destroy_node()
                 rclpy.shutdown()
