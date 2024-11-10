@@ -50,33 +50,35 @@ class InitialAndWaypointsPublisher(Node):
         """
         waypoints = []
 
-        # **웨이포인트 0 (사용자가 제공한 새로운 데이터로 수정됨)**
+        # **웨이포인트 0 (사용자가 제공한 데이터로 수정됨)**
         pose0 = PoseStamped()
         pose0.header.frame_id = 'map'
-        pose0.header.stamp.sec = 1731218336
-        pose0.header.stamp.nanosec = 536446293
-        pose0.pose.position.x = 0.36249980330467224
-        pose0.pose.position.y = -0.04687650129199028
+        pose0.header.stamp.sec = 1731219016
+        pose0.header.stamp.nanosec = 104457348
+        pose0.pose.position.x = 0.3624996840953827
+        pose0.pose.position.y = -0.08437620848417282
         pose0.pose.position.z = 0.0
         pose0.pose.orientation.x = 0.0
         pose0.pose.orientation.y = 0.0
-        pose0.pose.orientation.z = 0.013152969024045556
-        pose0.pose.orientation.w = 0.999913495961452
+        pose0.pose.orientation.z = -0.004903760749251643
+        pose0.pose.orientation.w = 0.9999879764929747
         waypoints.append(pose0)
 
-        # 기존 웨이포인트 1
+        # **웨이포인트 1 (사용자가 제공한 데이터로 수정됨)**
         pose1 = PoseStamped()
         pose1.header.frame_id = 'map'
-        pose1.pose.position.x = 0.24999737739562988
-        pose1.pose.position.y = -0.7093759775161743
+        pose1.header.stamp.sec = 1731219057
+        pose1.header.stamp.nanosec = 782380476
+        pose1.pose.position.x = 0.2999969720840454
+        pose1.pose.position.y = -0.8093762397766113
         pose1.pose.position.z = 0.0
         pose1.pose.orientation.x = 0.0
         pose1.pose.orientation.y = 0.0
-        pose1.pose.orientation.z = 0.9988731702878725
-        pose1.pose.orientation.w = 0.0474593476467486
+        pose1.pose.orientation.z = 0.9809032575209903
+        pose1.pose.orientation.w = 0.19449627087610163
         waypoints.append(pose1)
 
-        # 웨이포인트 2
+        # 기존 웨이포인트 2
         pose2 = PoseStamped()
         pose2.header.frame_id = 'map'
         pose2.pose.position.x = -0.4314682185649872
@@ -154,11 +156,11 @@ class InitialAndWaypointsPublisher(Node):
 
                 marker_array = MarkerArray()
 
-                if self.current_waypoint_index == 0:
-                    # 첫 번째 웨이포인트에 대해 세 개의 Marker 생성
-                    markers = self.create_markers_for_first_waypoint(waypoint)
+                if self.current_waypoint_index in [0, 1]:
+                    # 웨이포인트 0과 1에 대해 세 개의 Marker 생성
+                    markers = self.create_markers_for_waypoint(waypoint, self.current_waypoint_index + 1)
                     marker_array.markers.extend(markers)
-                    self.get_logger().info(f'Published first waypoint with {len(markers)} markers.')
+                    self.get_logger().info(f'Published waypoint {self.current_waypoint_index} with {len(markers)} markers.')
                 else:
                     # 나머지 웨이포인트에 대해 단일 Marker 생성
                     marker = self.create_marker_from_pose(waypoint, self.current_waypoint_index + 1)
@@ -178,17 +180,17 @@ class InitialAndWaypointsPublisher(Node):
                 self.destroy_node()
                 rclpy.shutdown()
 
-    def create_markers_for_first_waypoint(self, pose_stamped: PoseStamped) -> list:
+    def create_markers_for_waypoint(self, pose_stamped: PoseStamped, waypoint_number: int) -> list:
         """
-        첫 번째 웨이포인트를 위한 세 개의 Marker를 생성합니다.
+        특정 웨이포인트를 위한 세 개의 Marker를 생성합니다.
         """
         markers = []
 
         # Marker 0: TYPE 0 (CUBE)
         marker0 = Marker()
         marker0.header.frame_id = pose_stamped.header.frame_id
-        marker0.header.stamp.sec = 1731218336
-        marker0.header.stamp.nanosec = 536446293
+        marker0.header.stamp.sec = pose_stamped.header.stamp.sec
+        marker0.header.stamp.nanosec = pose_stamped.header.stamp.nanosec
         marker0.ns = ''
         marker0.id = 0
         marker0.type = Marker.CUBE
@@ -198,7 +200,7 @@ class InitialAndWaypointsPublisher(Node):
         marker0.scale.y = 0.05
         marker0.scale.z = 0.02
         marker0.color.r = 0.0
-        marker0.color.g = 1.0  # 255.0을 1.0으로 정규화
+        marker0.color.g = 1.0  # 초록색 (0.0 - 1.0 범위)
         marker0.color.b = 0.0
         marker0.color.a = 1.0
         marker0.lifetime = rclpy.duration.Duration(seconds=0).to_msg()
@@ -208,8 +210,8 @@ class InitialAndWaypointsPublisher(Node):
         # Marker 1: TYPE 2 (ARROW)
         marker1 = Marker()
         marker1.header.frame_id = pose_stamped.header.frame_id
-        marker1.header.stamp.sec = 1731218336
-        marker1.header.stamp.nanosec = 536446293
+        marker1.header.stamp.sec = pose_stamped.header.stamp.sec
+        marker1.header.stamp.nanosec = pose_stamped.header.stamp.nanosec
         marker1.ns = ''
         marker1.id = 1
         marker1.type = Marker.ARROW
@@ -218,7 +220,7 @@ class InitialAndWaypointsPublisher(Node):
         marker1.scale.x = 0.05
         marker1.scale.y = 0.05
         marker1.scale.z = 0.05
-        marker1.color.r = 1.0  # 255.0을 1.0으로 정규화
+        marker1.color.r = 1.0  # 빨간색 (0.0 - 1.0 범위)
         marker1.color.g = 0.0
         marker1.color.b = 0.0
         marker1.color.a = 1.0
@@ -229,8 +231,8 @@ class InitialAndWaypointsPublisher(Node):
         # Marker 2: TYPE 9 (TEXT_VIEW_FACING)
         marker2 = Marker()
         marker2.header.frame_id = pose_stamped.header.frame_id
-        marker2.header.stamp.sec = 1731218336
-        marker2.header.stamp.nanosec = 536446293
+        marker2.header.stamp.sec = pose_stamped.header.stamp.sec
+        marker2.header.stamp.nanosec = pose_stamped.header.stamp.nanosec
         marker2.ns = ''
         marker2.id = 2
         marker2.type = Marker.TEXT_VIEW_FACING
@@ -239,10 +241,10 @@ class InitialAndWaypointsPublisher(Node):
         marker2.pose.position.z += 0.2  # 텍스트를 위로 올림
         marker2.scale.z = 0.07
         marker2.color.r = 0.0
-        marker2.color.g = 1.0  # 255.0을 1.0으로 정규화
+        marker2.color.g = 1.0  # 초록색 (0.0 - 1.0 범위)
         marker2.color.b = 0.0
         marker2.color.a = 1.0
-        marker2.text = 'wp_1'
+        marker2.text = f'wp_{waypoint_number}'
         marker2.lifetime = rclpy.duration.Duration(seconds=0).to_msg()
         marker2.frame_locked = False
         markers.append(marker2)
