@@ -60,7 +60,7 @@ class YOLOTrackingPublisher(Node):
 
             # Proportional control for angular speed
             angular_speed_gain = 0.005  # Adjust this gain as needed
-            max_angular_speed = 0.5     # Max angular speed
+            max_angular_speed = 0.2     # Max angular speed
             max_linear_speed = 0.11     # Max linear speed (adjusted for your robot)
 
             if abs(alignment_error) > self.alignment_tolerance:
