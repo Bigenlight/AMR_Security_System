@@ -24,6 +24,7 @@ setup(
     entry_points={
         'console_scripts': [
             'amr_yolo = amr_yolo.amr_yolo:main',
+            'alarm_listener = amr_yolo.alarm_listener:main',  # Added new node
         ],
     },
 )
