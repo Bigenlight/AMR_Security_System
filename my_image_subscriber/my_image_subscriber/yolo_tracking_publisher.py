@@ -56,21 +56,30 @@ class YOLOTrackingPublisher(Node):
 
             # Publish movement commands to align the object with the center and move forward
             twist = Twist()
-            if abs(center_x - self.screen_center_x) > self.alignment_tolerance:
-                if center_x < self.screen_center_x:
-                    twist.angular.z = 0.2  # Rotate left
-                else:
-                    twist.angular.z = -0.2  # Rotate right
-                twist.linear.x = 0.0  # Do not move forward while rotating
+            alignment_error = center_x - self.screen_center_x
+
+            # Proportional control for angular speed
+            angular_speed_gain = 0.005  # Adjust this gain as needed
+            max_angular_speed = 0.2     # Max angular speed
+            max_linear_speed = 0.05     # Max linear speed (adjusted for your robot)
+
+            if abs(alignment_error) > self.alignment_tolerance:
+                # Rotate to align with the object
+                twist.angular.z = -angular_speed_gain * alignment_error
+                # Limit the angular speed to prevent too fast rotation
+                twist.angular.z = max(-max_angular_speed, min(max_angular_speed, twist.angular.z))
+                twist.linear.x = 0.0  # Stop moving forward while aligning
             else:
-                twist.angular.z = 0.0  # Stop rotation when aligned
-                twist.linear.x = 0.1   # Move forward when aligned
+                # When aligned, move forward
+                twist.angular.z = 0.0
+                twist.linear.x = max_linear_speed  # Move forward
 
             self.cmd_publisher.publish(twist)
 
         # Convert the frame to a ROS 2 Image message and publish
         msg = self.bridge.cv2_to_imgmsg(frame, encoding='bgr8')
         self.image_publisher.publish(msg)
+
 
 
     def destroy_node(self):
