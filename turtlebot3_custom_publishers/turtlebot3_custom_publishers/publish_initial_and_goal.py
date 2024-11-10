@@ -38,7 +38,7 @@ class InitialAndWaypointsPublisher(Node):
 
         # 각 웨이포인트별 발행 횟수 추적
         self.current_waypoint_index = 0
-        self.max_publishes_per_waypoint = 10  # 각 웨이포인트당 10번 발행
+        self.max_publishes_per_waypoint = 20  # 각 웨이포인트당 10번 발행
 
         # 타이머 설정: 0.5초마다 콜백 호출
         timer_period = 0.5  # 초 단위
