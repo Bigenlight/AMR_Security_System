@@ -1,0 +1,22 @@
+[2.022s] Invoking command in '/home/rokey/1_ws/src/amr_yolo': PYTHONPATH=/home/rokey/1_ws/src/build/amr_yolo/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/rokey/1_ws/src/install/amr_yolo/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/amr_yolo build --build-base /home/rokey/1_ws/src/build/amr_yolo/build install --record /home/rokey/1_ws/src/build/amr_yolo/install.log --single-version-externally-managed
+[2.344s] running egg_info
+[2.370s] writing ../build/amr_yolo/amr_yolo.egg-info/PKG-INFO
+[2.371s] writing dependency_links to ../build/amr_yolo/amr_yolo.egg-info/dependency_links.txt
+[2.371s] writing entry points to ../build/amr_yolo/amr_yolo.egg-info/entry_points.txt
+[2.371s] writing requirements to ../build/amr_yolo/amr_yolo.egg-info/requires.txt
+[2.372s] writing top-level names to ../build/amr_yolo/amr_yolo.egg-info/top_level.txt
+[2.415s] reading manifest file '../build/amr_yolo/amr_yolo.egg-info/SOURCES.txt'
+[2.417s] writing manifest file '../build/amr_yolo/amr_yolo.egg-info/SOURCES.txt'
+[2.417s] running build
+[2.417s] running build_py
+[2.418s] copying amr_yolo/__init__.py -> /home/rokey/1_ws/src/build/amr_yolo/build/lib/amr_yolo
+[2.418s] copying amr_yolo/amr_yolo.py -> /home/rokey/1_ws/src/build/amr_yolo/build/lib/amr_yolo
+[2.418s] running install
+[2.429s] running install_lib
+[2.447s] running install_egg_info
+[2.477s] removing '/home/rokey/1_ws/src/install/amr_yolo/lib/python3.10/site-packages/amr_yolo-0.0.1-py3.10.egg-info' (and everything under it)
+[2.477s] Copying ../build/amr_yolo/amr_yolo.egg-info to /home/rokey/1_ws/src/install/amr_yolo/lib/python3.10/site-packages/amr_yolo-0.0.1-py3.10.egg-info
+[2.479s] running install_scripts
+[2.805s] Installing amr_yolo script to /home/rokey/1_ws/src/install/amr_yolo/lib/amr_yolo
+[2.806s] writing list of installed files to '/home/rokey/1_ws/src/build/amr_yolo/install.log'
+[2.868s] Invoked command in '/home/rokey/1_ws/src/amr_yolo' returned '0': PYTHONPATH=/home/rokey/1_ws/src/build/amr_yolo/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/rokey/1_ws/src/install/amr_yolo/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/amr_yolo build --build-base /home/rokey/1_ws/src/build/amr_yolo/build install --record /home/rokey/1_ws/src/build/amr_yolo/install.log --single-version-externally-managed

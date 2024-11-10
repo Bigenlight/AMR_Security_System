@@ -1,0 +1,45 @@
+[2.219s] Invoking command in '/home/rokey/1_ws/src/my_image_subscriber': PYTHONPATH=/home/rokey/1_ws/src/build/my_image_subscriber/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/my_image_subscriber build --build-base /home/rokey/1_ws/src/build/my_image_subscriber/build install --record /home/rokey/1_ws/src/build/my_image_subscriber/install.log --single-version-externally-managed install_data
+[2.629s] running egg_info
+[2.650s] creating ../build/my_image_subscriber/my_image_subscriber.egg-info
+[2.650s] writing ../build/my_image_subscriber/my_image_subscriber.egg-info/PKG-INFO
+[2.651s] writing dependency_links to ../build/my_image_subscriber/my_image_subscriber.egg-info/dependency_links.txt
+[2.651s] writing entry points to ../build/my_image_subscriber/my_image_subscriber.egg-info/entry_points.txt
+[2.651s] writing requirements to ../build/my_image_subscriber/my_image_subscriber.egg-info/requires.txt
+[2.651s] writing top-level names to ../build/my_image_subscriber/my_image_subscriber.egg-info/top_level.txt
+[2.651s] writing manifest file '../build/my_image_subscriber/my_image_subscriber.egg-info/SOURCES.txt'
+[2.695s] reading manifest file '../build/my_image_subscriber/my_image_subscriber.egg-info/SOURCES.txt'
+[2.696s] writing manifest file '../build/my_image_subscriber/my_image_subscriber.egg-info/SOURCES.txt'
+[2.696s] running build
+[2.696s] running build_py
+[2.696s] creating /home/rokey/1_ws/src/build/my_image_subscriber/build/lib/my_image_subscriber
+[2.697s] copying my_image_subscriber/__init__.py -> /home/rokey/1_ws/src/build/my_image_subscriber/build/lib/my_image_subscriber
+[2.697s] copying my_image_subscriber/image_subscriber.py -> /home/rokey/1_ws/src/build/my_image_subscriber/build/lib/my_image_subscriber
+[2.703s] copying my_image_subscriber/trecking_mode.py -> /home/rokey/1_ws/src/build/my_image_subscriber/build/lib/my_image_subscriber
+[2.703s] copying my_image_subscriber/test.py -> /home/rokey/1_ws/src/build/my_image_subscriber/build/lib/my_image_subscriber
+[2.703s] copying my_image_subscriber/yolo_publisher.py -> /home/rokey/1_ws/src/build/my_image_subscriber/build/lib/my_image_subscriber
+[2.704s] running install
+[2.709s] running install_lib
+[2.731s] creating /home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages/my_image_subscriber
+[2.731s] copying /home/rokey/1_ws/src/build/my_image_subscriber/build/lib/my_image_subscriber/__init__.py -> /home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages/my_image_subscriber
+[2.731s] copying /home/rokey/1_ws/src/build/my_image_subscriber/build/lib/my_image_subscriber/image_subscriber.py -> /home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages/my_image_subscriber
+[2.731s] copying /home/rokey/1_ws/src/build/my_image_subscriber/build/lib/my_image_subscriber/trecking_mode.py -> /home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages/my_image_subscriber
+[2.732s] copying /home/rokey/1_ws/src/build/my_image_subscriber/build/lib/my_image_subscriber/test.py -> /home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages/my_image_subscriber
+[2.732s] copying /home/rokey/1_ws/src/build/my_image_subscriber/build/lib/my_image_subscriber/yolo_publisher.py -> /home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages/my_image_subscriber
+[2.733s] byte-compiling /home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages/my_image_subscriber/__init__.py to __init__.cpython-310.pyc
+[2.733s] byte-compiling /home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages/my_image_subscriber/image_subscriber.py to image_subscriber.cpython-310.pyc
+[2.736s] byte-compiling /home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages/my_image_subscriber/trecking_mode.py to trecking_mode.cpython-310.pyc
+[2.737s] byte-compiling /home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages/my_image_subscriber/test.py to test.cpython-310.pyc
+[2.737s] byte-compiling /home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages/my_image_subscriber/yolo_publisher.py to yolo_publisher.cpython-310.pyc
+[2.739s] running install_data
+[2.739s] creating /home/rokey/1_ws/src/install/my_image_subscriber/share/my_image_subscriber/templates
+[2.739s] copying my_image_subscriber/templates/index.html -> /home/rokey/1_ws/src/install/my_image_subscriber/share/my_image_subscriber/templates
+[2.740s] copying my_image_subscriber/templates/login_center.html -> /home/rokey/1_ws/src/install/my_image_subscriber/share/my_image_subscriber/templates
+[2.740s] copying my_image_subscriber/templates/welcome_center_two_cam.html -> /home/rokey/1_ws/src/install/my_image_subscriber/share/my_image_subscriber/templates
+[2.740s] running install_egg_info
+[2.764s] Copying ../build/my_image_subscriber/my_image_subscriber.egg-info to /home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages/my_image_subscriber-0.0.0-py3.10.egg-info
+[2.765s] running install_scripts
+[3.032s] Installing image_subscriber script to /home/rokey/1_ws/src/install/my_image_subscriber/lib/my_image_subscriber
+[3.033s] Installing trecking_mode script to /home/rokey/1_ws/src/install/my_image_subscriber/lib/my_image_subscriber
+[3.033s] Installing yolo_publisher script to /home/rokey/1_ws/src/install/my_image_subscriber/lib/my_image_subscriber
+[3.033s] writing list of installed files to '/home/rokey/1_ws/src/build/my_image_subscriber/install.log'
+[3.109s] Invoked command in '/home/rokey/1_ws/src/my_image_subscriber' returned '0': PYTHONPATH=/home/rokey/1_ws/src/build/my_image_subscriber/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/rokey/1_ws/src/install/my_image_subscriber/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/my_image_subscriber build --build-base /home/rokey/1_ws/src/build/my_image_subscriber/build install --record /home/rokey/1_ws/src/build/my_image_subscriber/install.log --single-version-externally-managed install_data

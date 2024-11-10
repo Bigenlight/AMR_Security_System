@@ -1,0 +1,22 @@
+running egg_info
+writing ../build/turtlebot3_custom_publishers/turtlebot3_custom_publishers.egg-info/PKG-INFO
+writing dependency_links to ../build/turtlebot3_custom_publishers/turtlebot3_custom_publishers.egg-info/dependency_links.txt
+writing entry points to ../build/turtlebot3_custom_publishers/turtlebot3_custom_publishers.egg-info/entry_points.txt
+writing requirements to ../build/turtlebot3_custom_publishers/turtlebot3_custom_publishers.egg-info/requires.txt
+writing top-level names to ../build/turtlebot3_custom_publishers/turtlebot3_custom_publishers.egg-info/top_level.txt
+reading manifest file '../build/turtlebot3_custom_publishers/turtlebot3_custom_publishers.egg-info/SOURCES.txt'
+writing manifest file '../build/turtlebot3_custom_publishers/turtlebot3_custom_publishers.egg-info/SOURCES.txt'
+running build
+running build_py
+copying turtlebot3_custom_publishers/__init__.py -> /home/rokey/1_ws/src/build/turtlebot3_custom_publishers/build/lib/turtlebot3_custom_publishers
+copying turtlebot3_custom_publishers/publish_initial_and_goal.py -> /home/rokey/1_ws/src/build/turtlebot3_custom_publishers/build/lib/turtlebot3_custom_publishers
+running install
+running install_lib
+running install_data
+copying package.xml -> /home/rokey/1_ws/src/install/turtlebot3_custom_publishers/share/turtlebot3_custom_publishers
+running install_egg_info
+removing '/home/rokey/1_ws/src/install/turtlebot3_custom_publishers/lib/python3.10/site-packages/turtlebot3_custom_publishers-0.0.0-py3.10.egg-info' (and everything under it)
+Copying ../build/turtlebot3_custom_publishers/turtlebot3_custom_publishers.egg-info to /home/rokey/1_ws/src/install/turtlebot3_custom_publishers/lib/python3.10/site-packages/turtlebot3_custom_publishers-0.0.0-py3.10.egg-info
+running install_scripts
+Installing publish_initial_and_goal script to /home/rokey/1_ws/src/install/turtlebot3_custom_publishers/lib/turtlebot3_custom_publishers
+writing list of installed files to '/home/rokey/1_ws/src/build/turtlebot3_custom_publishers/install.log'

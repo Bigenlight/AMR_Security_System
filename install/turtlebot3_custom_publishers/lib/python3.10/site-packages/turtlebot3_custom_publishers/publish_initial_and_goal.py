@@ -3,21 +3,20 @@
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseWithCovarianceStamped
-from visualization_msgs.msg import Marker, MarkerArray
+from visualization_msgs.msg import Marker
 from rclpy.qos import QoSProfile, QoSDurabilityPolicy
-import copy
 
 class InitialAndWaypointsPublisher(Node):
     def __init__(self):
         super().__init__('initial_and_waypoints_publisher')
 
         # QoS 설정: TRANSIENT_LOCAL로 설정하여 새로운 구독자에게 마지막 메시지를 전달
-        qos_profile = QoSProfile(depth=10)
+        qos_profile = QoSProfile(depth=1)
         qos_profile.durability = QoSDurabilityPolicy.TRANSIENT_LOCAL
 
         # 퍼블리셔 생성
         self.initialpose_publisher = self.create_publisher(PoseWithCovarianceStamped, '/initialpose', qos_profile)
-        self.waypoints_publisher = self.create_publisher(MarkerArray, '/waypoints', qos_profile)  # MarkerArray 퍼블리셔
+        self.waypoints_publisher = self.create_publisher(Marker, '/waypoints', qos_profile)  # Marker 퍼블리셔
 
         # 노드 시작 시간 기록
         self.start_time = self.get_clock().now()
@@ -27,10 +26,7 @@ class InitialAndWaypointsPublisher(Node):
 
         # 웨이포인트 리스트 정의
         self.waypoints = self.generate_waypoints()
-
-        # 반복 횟수 카운터
-        self.publish_count = 0
-        self.max_publishes = 10  # 10번 반복
+        self.waypoint_index = 0  # 현재 웨이포인트 인덱스
 
         # 타이머 설정: 0.5초마다 콜백 호출
         timer_period = 0.5  # 초 단위
@@ -45,9 +41,11 @@ class InitialAndWaypointsPublisher(Node):
         # 웨이포인트 1
         marker1 = Marker()
         marker1.header.frame_id = 'map'
-        marker1.ns = 'waypoints'
-        marker1.id = 1
-        marker1.type = Marker.TEXT_VIEW_FACING  
+        marker1.header.stamp.sec = 1731134423
+        marker1.header.stamp.nanosec = 498346867
+        marker1.ns = ''
+        marker1.id = 2
+        marker1.type = Marker.TEXT_VIEW_FACING  # type: 9 corresponds to TEXT_VIEW_FACING
         marker1.action = Marker.ADD
         marker1.pose.position.x = 0.29292383790016174
         marker1.pose.position.y = -0.22626881301403046
@@ -60,19 +58,23 @@ class InitialAndWaypointsPublisher(Node):
         marker1.scale.y = 0.07
         marker1.scale.z = 0.07
         marker1.color.r = 0.0
-        marker1.color.g = 1.0  # ROS에서는 색상 값이 0.0~1.0 범위입니다.
+        marker1.color.g = 1.0  # ROS에서는 색상 값이 0.0~1.0 범위입니다. 255.0은 잘못된 값입니다.
         marker1.color.b = 0.0
         marker1.color.a = 1.0
-        marker1.lifetime = rclpy.duration.Duration(seconds=0).to_msg()  # 영구적으로 표시
+        marker1.lifetime.sec = 0
+        marker1.lifetime.nanosec = 0
+        marker1.frame_locked = False
         marker1.text = 'wp_1'
         waypoints.append(marker1)
 
         # 웨이포인트 2
         marker2 = Marker()
         marker2.header.frame_id = 'map'
-        marker2.ns = 'waypoints'
-        marker2.id = 2
-        marker2.type = Marker.ARROW  
+        marker2.header.stamp.sec = 1731134423
+        marker2.header.stamp.nanosec = 498346867
+        marker2.ns = ''
+        marker2.id = 3
+        marker2.type = Marker.ARROW  # type: 0 corresponds to ARROW
         marker2.action = Marker.ADD
         marker2.pose.position.x = -0.4314682185649872
         marker2.pose.position.y = -0.6317271590232849
@@ -85,59 +87,68 @@ class InitialAndWaypointsPublisher(Node):
         marker2.scale.y = 0.05
         marker2.scale.z = 0.02
         marker2.color.r = 0.0
-        marker2.color.g = 1.0  # ROS에서는 색상 값이 0.0~1.0 범위입니다.
+        marker2.color.g = 1.0  # ROS에서는 색상 값이 0.0~1.0 범위입니다. 255.0은 잘못된 값입니다.
         marker2.color.b = 0.0
         marker2.color.a = 1.0
-        marker2.lifetime = rclpy.duration.Duration(seconds=0).to_msg()  # 영구적으로 표시
+        marker2.lifetime.sec = 0
+        marker2.lifetime.nanosec = 0
+        marker2.frame_locked = False
         waypoints.append(marker2)
 
         # 웨이포인트 3
         marker3 = Marker()
         marker3.header.frame_id = 'map'
-        marker3.ns = 'waypoints'
-        marker3.id = 3
-        marker3.type = Marker.CUBE  
+        marker3.header.stamp.sec = 1731134423
+        marker3.header.stamp.nanosec = 498346867
+        marker3.ns = ''
+        marker3.id = 4
+        marker3.type = Marker.CUBE  # type: 2 corresponds to CUBE
         marker3.action = Marker.ADD
-        marker3.pose.position.x = -1.0217899084091187
-        marker3.pose.position.y = -0.1412075310945511
-        marker3.pose.position.z = 0.2
+        marker3.pose.position.x = -0.4314682185649872
+        marker3.pose.position.y = -0.6317271590232849
+        marker3.pose.position.z = 0.0
         marker3.pose.orientation.x = 0.0
         marker3.pose.orientation.y = 0.0
-        marker3.pose.orientation.z = -0.9966806227907764
-        marker3.pose.orientation.w = 0.08141090930207111
-        marker3.scale.x = 0.07
-        marker3.scale.y = 0.07
-        marker3.scale.z = 0.07
-        marker3.color.r = 0.0
-        marker3.color.g = 1.0  # ROS에서는 색상 값이 0.0~1.0 범위입니다.
+        marker3.pose.orientation.z = 0.9556588551325824
+        marker3.pose.orientation.w = 0.2944760645734756
+        marker3.scale.x = 0.05
+        marker3.scale.y = 0.05
+        marker3.scale.z = 0.05
+        marker3.color.r = 1.0  # ROS에서는 색상 값이 0.0~1.0 범위입니다. 255.0은 잘못된 값입니다.
+        marker3.color.g = 0.0
         marker3.color.b = 0.0
         marker3.color.a = 1.0
-        marker3.lifetime = rclpy.duration.Duration(seconds=0).to_msg()  # 영구적으로 표시
-        marker3.text = 'wp_3'
+        marker3.lifetime.sec = 0
+        marker3.lifetime.nanosec = 0
+        marker3.frame_locked = False
         waypoints.append(marker3)
 
         # 웨이포인트 4
         marker4 = Marker()
         marker4.header.frame_id = 'map'
-        marker4.ns = 'waypoints'
-        marker4.id = 4
-        marker4.type = Marker.TEXT_VIEW_FACING   
+        marker4.header.stamp.sec = 1731134454
+        marker4.header.stamp.nanosec = 839340949
+        marker4.ns = ''
+        marker4.id = 5
+        marker4.type = Marker.TEXT_VIEW_FACING  # type: 9 corresponds to TEXT_VIEW_FACING
         marker4.action = Marker.ADD
-        marker4.pose.position.x = -1.4410333633422852
-        marker4.pose.position.y = -0.6268379092216492
+        marker4.pose.position.x = -1.0217899084091187
+        marker4.pose.position.y = -0.1412075310945511
         marker4.pose.position.z = 0.2
         marker4.pose.orientation.x = 0.0
         marker4.pose.orientation.y = 0.0
-        marker4.pose.orientation.z = -0.6834678690015524
-        marker4.pose.orientation.w = 0.7299805970315079
+        marker4.pose.orientation.z = -0.9966806227907764
+        marker4.pose.orientation.w = 0.08141090930207111
         marker4.scale.x = 0.07
         marker4.scale.y = 0.07
         marker4.scale.z = 0.07
         marker4.color.r = 0.0
-        marker4.color.g = 1.0  # ROS에서는 색상 값이 0.0~1.0 범위입니다.
+        marker4.color.g = 1.0  # ROS에서는 색상 값이 0.0~1.0 범위입니다. 255.0은 잘못된 값입니다.
         marker4.color.b = 0.0
         marker4.color.a = 1.0
-        marker4.lifetime = rclpy.duration.Duration(seconds=0).to_msg()  # 영구적으로 표시
+        marker4.lifetime.sec = 0
+        marker4.lifetime.nanosec = 0
+        marker4.frame_locked = False
         marker4.text = 'wp_4'
         waypoints.append(marker4)
 
@@ -176,47 +187,29 @@ class InitialAndWaypointsPublisher(Node):
                 self.current_state = 'waypoints'
                 self.start_time = self.get_clock().now()
                 self.get_logger().info('Switching to publishing /waypoints')
-                self.publish_waypoints()
 
         elif self.current_state == 'waypoints':
-            # 현재는 'waypoints' 상태에서는 추가 작업이 필요 없으므로 pass
-            pass
+            if self.waypoint_index < len(self.waypoints):
+                # 현재 웨이포인트 발행
+                waypoint_msg = self.waypoints[self.waypoint_index]
+                waypoint_msg.header.stamp = current_time.to_msg()
+                self.waypoints_publisher.publish(waypoint_msg)
+                self.get_logger().info(f'Published /waypoints [{self.waypoint_index + 1}/{len(self.waypoints)}]')
+                self.waypoint_index += 1
+            else:
+                # 모든 웨이포인트 발행 완료. 노드 종료
+                self.get_logger().info('Finished publishing all waypoints. Shutting down node.')
+                self.timer.cancel()
+                self.destroy_node()
+                rclpy.shutdown()
 
-    def publish_waypoints(self):
-        """
-        네 개의 웨이포인트를 MarkerArray로 한 번에 발행하고, 이를 10번 반복합니다.
-        """
-        if self.publish_count >= self.max_publishes:
-            # 10번 반복 완료, 노드 종료
-            self.get_logger().info('Finished publishing waypoints 10 times. Shutting down node.')
-            self.timer.cancel()
-            self.destroy_node()
-            rclpy.shutdown()
-            return
+def main(args=None):
+    rclpy.init(args=args)
+    node = InitialAndWaypointsPublisher()
+    rclpy.spin(node)  # 콜백 처리를 위해 노드 실행
+    # 노드가 종료되면 여기로 이동
+    node.destroy_node()
+    rclpy.shutdown()
 
-        current_time = self.get_clock().now()
-
-        marker_array = MarkerArray()
-        for marker in self.waypoints:
-            # Marker의 header.stamp를 현재 시간으로 설정
-            marker_copy = copy.deepcopy(marker)
-            marker_copy.header.stamp = current_time.to_msg()
-            marker_array.markers.append(marker_copy)
-
-            self.get_logger().info(f'Prepared /waypoints [ID: {marker_copy.id}]')
-
-        self.waypoints_publisher.publish(marker_array)
-        self.get_logger().info(f'Published waypoints array [{self.publish_count + 1}/{self.max_publishes}]')
-
-        self.publish_count += 1
-
-    def main(args=None):
-        rclpy.init(args=args)
-        node = InitialAndWaypointsPublisher()
-        rclpy.spin(node)  # 콜백 처리를 위해 노드 실행
-        # 노드가 종료되면 여기로 이동
-        node.destroy_node()
-        rclpy.shutdown()
-
-    if __name__ == '__main__':
-        main()
+if __name__ == '__main__':
+    main()
