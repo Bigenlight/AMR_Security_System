@@ -54,21 +54,24 @@ class YOLOTrackingPublisher(Node):
             cv2.putText(frame, label_text, (int(x1), int(y1) - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-            # Publish movement commands to align the object with the center
+            # Publish movement commands to align the object with the center and move forward
             twist = Twist()
             if abs(center_x - self.screen_center_x) > self.alignment_tolerance:
                 if center_x < self.screen_center_x:
                     twist.angular.z = 0.2  # Rotate left
                 else:
                     twist.angular.z = -0.2  # Rotate right
+                twist.linear.x = 0.0  # Do not move forward while rotating
             else:
                 twist.angular.z = 0.0  # Stop rotation when aligned
+                twist.linear.x = 0.1   # Move forward when aligned
 
             self.cmd_publisher.publish(twist)
 
         # Convert the frame to a ROS 2 Image message and publish
         msg = self.bridge.cv2_to_imgmsg(frame, encoding='bgr8')
         self.image_publisher.publish(msg)
+
 
     def destroy_node(self):
         super().destroy_node()
