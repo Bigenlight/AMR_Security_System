@@ -12,15 +12,6 @@ https://www.notion.so/Doosan_ROKEY-135aa28ef66480cd9abff0695a477656
 
 [![Watch the video](https://img.youtube.com/vi/RUa1YbjOug4/0.jpg)](https://www.youtube.com/watch?v=RUa1YbjOug4)
 
-[![Watch the video](https://img.youtube.com/vi/RUa1YbjOug4/0.jpg)](https://www.youtube.com/watch?v=RUa1YbjOug4)
-
-
-https://youtu.be/EBzcNnto5Q8?si=pLEfGa-3pataYkpp
-
-https://youtu.be/O0V8NkTKurs?si=qHS59z7TQjNmxypd
-
-https://youtu.be/RUa1YbjOug4?si=t43bRGLbcQEI-iHe
-
 https://youtu.be/pha5p3XjejA?si=cxTEb-5J9s4nuRJ9
 
 https://youtu.be/yahTqnIqKOE?si=Fhcg0TSRfbUSn2Xn
