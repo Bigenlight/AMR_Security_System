@@ -83,7 +83,7 @@ class YOLOTrackingPublisher(Node):
 
             # Variables to hold tracking info
             highest_confidence_detection = None
-            highest_confidence = 0.8  # Minimum confidence threshold for tracking
+            highest_confidence = 0.7  # Minimum confidence threshold for tracking
 
             # Iterate over results to draw bounding boxes and find the best class 0 detection
             for result in results:
