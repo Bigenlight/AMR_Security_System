@@ -27,7 +27,7 @@ class YOLOTrackingPublisher(Node):
         self.model = YOLO('/home/rokey3/1_ws/src/best.pt')  # Update the model path as needed
 
         # Video capture setup
-        self.cap = cv2.VideoCapture(1)  # Adjust this to your camera source
+        self.cap = cv2.VideoCapture(0)  # Adjust this to your camera source
         if not self.cap.isOpened():
             self.get_logger().error("Failed to open camera.")
             return
