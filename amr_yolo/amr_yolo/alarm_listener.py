@@ -24,14 +24,19 @@ class AlarmListener(Node):
 
         # Variables to manage subprocesses
         self.nav_process = None
+        self.robot_process = None
         self.yolo_process = None
         self.is_processing = False  # Flag to prevent multiple triggers
 
+        # Declare a parameter for the map path
+        self.declare_parameter('map_path', os.path.expanduser('~/map.yaml'))
+
     def alarm_callback(self, msg):
-        self.get_logger().info(f"Received alarm message: {msg.data}")
+        self.get_logger().info(f"Received alarm message: '{msg.data}'")
 
         if msg.data.lower() == 'car detected' and not self.is_processing:
             self.is_processing = True  # Prevent multiple triggers
+            self.get_logger().info("Triggering launch of navigation, robot bringup, and YOLO tracking nodes.")
             threading.Thread(target=self.start_launches).start()
         else:
             if msg.data.lower() != 'car detected':
@@ -41,37 +46,52 @@ class AlarmListener(Node):
 
     def start_launches(self):
         try:
-            # Start the navigation launch file
+            # Retrieve the map path from parameters
+            map_path = self.get_map_path()
+
+            # Verify that the map file exists
+            if not os.path.isfile(map_path):
+                self.get_logger().error(f"Map file not found at: {map_path}")
+                return
+
+            # 1. Start the navigation launch file
             nav_command = [
                 'ros2', 'launch', 'turtlebot3_navigation2', 'navigation2.launch.py',
-                f'map:={self.get_map_path()}'
+                f'map:={map_path}'
             ]
-            self.get_logger().info("Starting navigation launch...")
+            self.get_logger().info(f"Starting navigation launch with map: {map_path}")
             self.nav_process = subprocess.Popen(nav_command)
-            self.get_logger().info("Navigation launch started.")
+            self.get_logger().info("Navigation launch started successfully.")
 
-            # Wait for 10 seconds before starting the next launch file
+            # 2. Start the robot bringup launch file immediately after navigation
+            robot_command = [
+                'ros2', 'launch', 'turtlebot3_bringup', 'robot.launch.py'
+            ]
+            self.get_logger().info("Starting robot bringup launch...")
+            self.robot_process = subprocess.Popen(robot_command)
+            self.get_logger().info("Robot bringup launch started successfully.")
+
+            # 3. Wait for 10 seconds before starting the YOLO tracking launch file
             self.get_logger().info("Waiting for 10 seconds before starting YOLO tracking launch...")
             time.sleep(10)
 
-            # Start the YOLO tracking launch file
+            # 4. Start the YOLO tracking launch file
             yolo_command = [
                 'ros2', 'launch', 'amr_yolo', 'start_yolo_tracking_and_publish.launch.py'
             ]
             self.get_logger().info("Starting YOLO tracking launch...")
             self.yolo_process = subprocess.Popen(yolo_command)
-            self.get_logger().info("YOLO tracking launch started.")
+            self.get_logger().info("YOLO tracking launch started successfully.")
 
         except Exception as e:
             self.get_logger().error(f"Exception occurred while launching: {e}")
         # Do not reset is_processing to allow only one launch per node lifetime
 
     def get_map_path(self):
-        # Retrieve the map path from a parameter or use a default path
-        # You can declare a parameter or modify this method as needed
-        default_map_path = os.path.expanduser('~/map.yaml')
-        #default_map_path = '/home/rokey3/map.yaml'
-        map_path = self.declare_parameter('map_path', default_map_path).value
+        # Get the map_path parameter
+        map_path = self.get_parameter('map_path').value
+        # Expand environment variables and user (~) in the path
+        map_path = os.path.expandvars(os.path.expanduser(map_path))
         self.get_logger().info(f"Using map path: {map_path}")
         return map_path
 
@@ -80,6 +100,9 @@ class AlarmListener(Node):
         if self.nav_process and self.nav_process.poll() is None:
             self.nav_process.terminate()
             self.get_logger().info("Terminated navigation process.")
+        if self.robot_process and self.robot_process.poll() is None:
+            self.robot_process.terminate()
+            self.get_logger().info("Terminated robot bringup process.")
         if self.yolo_process and self.yolo_process.poll() is None:
             self.yolo_process.terminate()
             self.get_logger().info("Terminated YOLO tracking process.")

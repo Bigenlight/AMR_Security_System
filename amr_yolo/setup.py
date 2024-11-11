@@ -14,6 +14,8 @@ setup(
         # Install launch files
         (os.path.join('share', package_name, 'launch'), glob.glob(os.path.join('launch', '*.launch.py'))),
         # Include other data files if necessary
+        #(os.path.join('share', package_name, 'yolo_models'), glob.glob(os.path.join('yolo_models', '*.pt'))),
+        # Include other data files if necessary
     ],
     install_requires=['setuptools', 'opencv-python', 'ultralytics', 'numpy'],
     zip_safe=True,
