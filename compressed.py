@@ -54,7 +54,7 @@ class YOLOTrackingPublisher(Node):
         # Start threads
         threading.Thread(target=self.capture_frames, daemon=True).start()
         threading.Thread(target=self.process_frames, daemon=True).start()
-        self.timer = self.create_timer(0.1, self.publish_image)  # Adjust timer frequency as needed
+        self.timer = self.create_timer(0.2, self.publish_image)  # Adjust timer frequency to 5Hz
 
     def capture_frames(self):
         """Continuously capture frames from the camera in a separate thread."""
@@ -83,7 +83,7 @@ class YOLOTrackingPublisher(Node):
 
             # Variables to hold tracking info
             highest_confidence_detection = None
-            highest_confidence = 0.7  # Minimum confidence threshold for tracking
+            highest_confidence = 0.8  # Minimum confidence threshold for tracking
 
             # Iterate over results to draw bounding boxes and find the best class 0 detection
             for result in results:
@@ -143,9 +143,12 @@ class YOLOTrackingPublisher(Node):
                 # No valid class 0 detection; you may choose to stop the robot or keep previous commands
                 pass
 
-            # Update processed frame
+            # Resize the processed frame to reduce data size
+            resized_frame = cv2.resize(frame_to_process, (320, 240))  # Resize to 320x240
+
+            # Update processed frame with resized image
             with self.lock:
-                self.processed_frame = frame_to_process.copy()
+                self.processed_frame = resized_frame.copy()
 
             self.frame_count += 1
             time.sleep(0.01)  # Adjust delay if necessary to control processing rate
