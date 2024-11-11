@@ -6,6 +6,9 @@ It's just test message..
 
 [![Important Project Information](https://www.youtube.com/watch?v=EBzcNnto5Q8&ab_channel=enlight%E2%80%9C%EB%A9%94%ED%83%9C%EC%98%A4%E2%80%9D)](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
 
+[![Watch the video](https://img.youtube.com/vi/EBzcNnto5Q8/0.jpg)](https://www.youtube.com/watch?v=EBzcNnto5Q8)
+
+
 https://www.notion.so/Doosan_ROKEY-135aa28ef66480cd9abff0695a477656
 
 https://youtu.be/EBzcNnto5Q8?si=pLEfGa-3pataYkpp
