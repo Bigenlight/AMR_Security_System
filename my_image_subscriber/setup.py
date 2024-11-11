@@ -15,6 +15,8 @@ setup(
         (os.path.join('share', package_name, 'config'), glob.glob(os.path.join(package_name, 'config', '*.yaml'))),
         # Include other data files if necessary
         (os.path.join('share', package_name, 'launch'), glob.glob(os.path.join('launch', '*.launch.py'))),
+
+        (os.path.join('share', package_name, 'templates'), glob.glob(os.path.join(package_name, 'templates', '*.html'))),
         # Include other data files if necessary
     ],
     install_requires=[
@@ -23,6 +25,7 @@ setup(
         'numpy',
         'ultralytics',  # Added for YOLO
         'shapely',      # Added if used elsewhere
+        'flask',
         # Remove 'flask' if it's not used by your nodes
     ],
     zip_safe=True,

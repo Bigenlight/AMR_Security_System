@@ -1,3 +1,5 @@
+# image_subscriber.py
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
@@ -14,31 +16,55 @@ import time
 class ImageSubscriber(Node):
     def __init__(self):
         super().__init__('image_subscriber')
-        self.subscription = self.create_subscription(
+        
+        # 두 개의 토픽을 구독
+        self.subscription1 = self.create_subscription(
             Image,
             'processed_image',
-            self.listener_callback,
+            self.listener_callback1,
             10)
+        self.subscription2 = self.create_subscription(
+            Image,
+            'processed_image_amr',
+            self.listener_callback2,
+            10)
+        
         self.bridge = CvBridge()
-        self.latest_ros_frame = None
-        self.lock_ros = threading.Lock()
-        self.frame_available_ros = threading.Event()
+        self.latest_ros_frame1 = None
+        self.latest_ros_frame2 = None
+        self.lock_ros1 = threading.Lock()
+        self.lock_ros2 = threading.Lock()
+        self.frame_available_ros1 = threading.Event()
+        self.frame_available_ros2 = threading.Event()
+        
         self.get_logger().info('ImageSubscriber node has been started.')
 
-    def listener_callback(self, msg):
+    def listener_callback1(self, msg):
         try:
             # ROS 이미지 메시지를 OpenCV 이미지로 변환
             cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-            with self.lock_ros:
-                self.latest_ros_frame = cv_image.copy()
-            self.frame_available_ros.set()
+            with self.lock_ros1:
+                self.latest_ros_frame1 = cv_image.copy()
+            self.frame_available_ros1.set()
+            self.get_logger().debug('Received new frame on processed_image')
         except Exception as e:
-            self.get_logger().error(f'Error converting image: {e}')
+            self.get_logger().error(f'Error converting image from processed_image: {e}')
+
+    def listener_callback2(self, msg):
+        try:
+            # ROS 이미지 메시지를 OpenCV 이미지로 변환
+            cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+            with self.lock_ros2:
+                self.latest_ros_frame2 = cv_image.copy()
+            self.frame_available_ros2.set()
+            self.get_logger().debug('Received new frame on processed_image_amr')
+        except Exception as e:
+            self.get_logger().error(f'Error converting image from processed_image_amr: {e}')
 
 # Flask 애플리케이션 설정
 package_name = 'my_image_subscriber'
 package_share_directory = get_package_share_directory(package_name)
-template_dir = os.path.join(package_share_directory, 'templates')
+template_dir = os.path.join(package_share_directory, 'templates')  # 템플릿 디렉토리 경로
 
 app = Flask(__name__, template_folder=template_dir)
 app.secret_key = 'your_secret_key'  # 세션 보안을 위한 비밀 키
@@ -78,14 +104,24 @@ def welcome():
     # 웰컴 페이지 렌더링
     return render_template('welcome_center_two_cam.html', username=session['username'])
 
-# Flask 비디오 피드1: ROS 토픽에서 이미지 수신
-def generate_ros_frames(image_subscriber_node):
+# Flask 비디오 피드1 라우트 (processed_image 토픽에서 이미지 수신)
+@app.route('/video_feed1')
+def video_feed1():
+    return Response(generate_ros_frames1(app.image_subscriber_node), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+# Flask 비디오 피드2 라우트 (processed_image_amr 토픽에서 이미지 수신)
+@app.route('/video_feed2')
+def video_feed2():
+    return Response(generate_ros_frames2(app.image_subscriber_node), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+# 비디오 프레임 생성 함수1 (processed_image 토픽)
+def generate_ros_frames1(image_subscriber_node):
     while True:
         # 새로운 프레임이 도착할 때까지 대기
-        image_subscriber_node.frame_available_ros.wait()
-        with image_subscriber_node.lock_ros:
-            frame = image_subscriber_node.latest_ros_frame.copy() if image_subscriber_node.latest_ros_frame is not None else None
-            image_subscriber_node.frame_available_ros.clear()
+        image_subscriber_node.frame_available_ros1.wait()
+        with image_subscriber_node.lock_ros1:
+            frame = image_subscriber_node.latest_ros_frame1.copy() if image_subscriber_node.latest_ros_frame1 is not None else None
+            image_subscriber_node.frame_available_ros1.clear()
         if frame is not None:
             # 프레임 크기 조정 (인코딩 시간 단축)
             frame = cv2.resize(frame, (480, 360))  # 필요에 따라 해상도 조정
@@ -93,7 +129,7 @@ def generate_ros_frames(image_subscriber_node):
             encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 50]  # 50으로 낮춰 인코딩 속도 향상
             ret, buffer = cv2.imencode('.jpg', frame, encode_param)
             if not ret:
-                app.logger.warning('Failed to encode ROS frame')
+                app.logger.warning('Failed to encode ROS frame1')
                 continue
             frame = buffer.tobytes()
             # 프레임 전송
@@ -103,94 +139,30 @@ def generate_ros_frames(image_subscriber_node):
             # 프레임이 없을 경우 짧은 대기
             time.sleep(0.01)  # 너무 짧게 설정하여 빠르게 다음 프레임을 처리
 
-# Flask 비디오 피드2: camera_id=2 직접 접근
-def generate_camera_frames(camera_id):
-    camera = cv2.VideoCapture(camera_id)
-    if not camera.isOpened():
-        app.logger.error(f"Camera {camera_id} could not be opened.")
-        return
-
+# 비디오 프레임 생성 함수2 (processed_image_amr 토픽)
+def generate_ros_frames2(image_subscriber_node):
     while True:
-        try:
-            success, frame = camera.read()
-            if not success:
-                app.logger.warning(f'Failed to read frame from camera {camera_id}')
-                break
-            else:
-                # 프레임 크기 조정 (인코딩 시간 단축)
-                frame = cv2.resize(frame, (480, 360))  # 필요에 따라 해상도 조정
-                # JPEG 인코딩 최적화 (속도 향상을 위해 품질 낮춤)
-                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 50]  # 50으로 낮춰 인코딩 속도 향상
-                ret, buffer = cv2.imencode('.jpg', frame, encode_param)
-                if not ret:
-                    app.logger.warning(f'Failed to encode frame from camera {camera_id}')
-                    continue
-                frame = buffer.tobytes()
-                # 프레임 전송
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-        except Exception as e:
-            app.logger.error(f"Error: {e}")
-            break
-
-# 저장 좌표 리스트
-pt_1 = (460, 0)
-pt_2 = (640, 0)
-pt_3 = (640, 120)
-pt_4 = (460, 120)
-coordinates = [pt_1, pt_2, pt_3, pt_4]
-
-# Flask 비디오 피드2: camera_id=2에 좌표 표시
-def generate_frames_with_overlay(camera_id):
-    camera = cv2.VideoCapture(camera_id)
-    if not camera.isOpened():
-        app.logger.error(f"Camera {camera_id} could not be opened.")
-        return
-
-    while True:
-        try:
-            success, frame = camera.read()
-            if not success:
-                app.logger.warning(f'Failed to read frame from camera {camera_id}')
-                break
-            else:
-                # 프레임 크기 조정 (인코딩 시간 단축)
-                frame = cv2.resize(frame, (480, 360))  # 필요에 따라 해상도 조정
-                # 좌표에 원 그리기
-                for (x, y) in coordinates:
-                    cv2.circle(frame, (x, y), 5, (0, 0, 255), -1)  # 반지름 5의 빨간 원
-                # 사각형 그리기
-                pts = np.array(coordinates, np.int32)
-                pts = pts.reshape((-1, 1, 2))
-                cv2.polylines(frame, [pts], isClosed=True, color=(0, 255, 0), thickness=2)  # 초록색 사각형
-                # JPEG 인코딩 최적화 (속도 향상을 위해 품질 낮춤)
-                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 50]  # 50으로 낮춰 인코딩 속도 향상
-                ret, buffer = cv2.imencode('.jpg', frame, encode_param)
-                if not ret:
-                    app.logger.warning(f'Failed to encode frame from camera {camera_id}')
-                    continue
-                frame = buffer.tobytes()
-                # 프레임 전송
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-        except Exception as e:
-            app.logger.error(f"Error: {e}")
-            break
-
-# Flask 비디오 피드1 라우트 (ROS 토픽에서 이미지 수신)
-@app.route('/video_feed1')
-def video_feed1():
-    return Response(generate_ros_frames(app.image_subscriber_node), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-# Flask 비디오 피드2 라우트 (camera_id=2 직접 접근)
-@app.route('/video_feed2')
-def video_feed2():
-    return Response(generate_camera_frames(2), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-# Flask 비디오 피드2 라우트 (camera_id=2에 좌표 오버레이)
-@app.route('/video_feed2_overlay')
-def video_feed2_overlay():
-    return Response(generate_frames_with_overlay(2), mimetype='multipart/x-mixed-replace; boundary=frame')
+        # 새로운 프레임이 도착할 때까지 대기
+        image_subscriber_node.frame_available_ros2.wait()
+        with image_subscriber_node.lock_ros2:
+            frame = image_subscriber_node.latest_ros_frame2.copy() if image_subscriber_node.latest_ros_frame2 is not None else None
+            image_subscriber_node.frame_available_ros2.clear()
+        if frame is not None:
+            # 프레임 크기 조정 (인코딩 시간 단축)
+            frame = cv2.resize(frame, (480, 360))  # 필요에 따라 해상도 조정
+            # JPEG 인코딩 최적화 (속도 향상을 위해 품질 낮춤)
+            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 50]  # 50으로 낮춰 인코딩 속도 향상
+            ret, buffer = cv2.imencode('.jpg', frame, encode_param)
+            if not ret:
+                app.logger.warning('Failed to encode ROS frame2')
+                continue
+            frame = buffer.tobytes()
+            # 프레임 전송
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        else:
+            # 프레임이 없을 경우 짧은 대기
+            time.sleep(0.01)  # 너무 짧게 설정하여 빠르게 다음 프레임을 처리
 
 # 로그아웃 라우트
 @app.route('/logout')
@@ -202,7 +174,7 @@ def logout():
 
 # Flask 애플리케이션 실행 함수
 def run_flask_app():
-    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)  # debug=True로 설정
 
 # 메인 함수
 def main(args=None):
