@@ -6,6 +6,7 @@ https://www.notion.so/Doosan_ROKEY-135aa28ef66480cd9abff0695a477656
 
 [![Watch the video](https://img.youtube.com/vi/EBzcNnto5Q8/0.jpg)](https://www.youtube.com/watch?v=EBzcNnto5Q8)
 
+[![Watch the video](https://www.youtube.com/watch?v=RUa1YbjOug4&ab_channel=enlight%E2%80%9C%EB%A9%94%ED%83%9C%EC%98%A4%E2%80%9D)
 [![Watch the video](https://img.youtube.com/vi/O0V8NkTKurs/0.jpg)](https://www.youtube.com/watch?v=O0V8NkTKurs)
 
 https://youtu.be/RUa1YbjOug4?si=Y-CqtAxS5Jf4amHU
